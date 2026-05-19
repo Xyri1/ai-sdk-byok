@@ -66,14 +66,12 @@ The secret key must only ever be used in server-side code. Never expose it in a 
 From the repository root:
 
 ```sh
-npm install                        # installs root dev dependencies
-cd examples/nextjs-supabase
-npm install                        # installs example dependencies, including local ai-sdk-byok packages
+npm install
 ```
 
 ### 4. Build the package
 
-The example depends on `ai-sdk-byok` via `"file:../../packages/core"` and `@ai-sdk-byok/supabase` via `"file:../../packages/supabase"`. Make sure the packages are built before running the dev server:
+The example is part of the root npm workspace and depends on the local `ai-sdk-byok` and `@ai-sdk-byok/supabase` workspace packages. Make sure the packages are built before running the dev server:
 
 ```sh
 # from the repository root
