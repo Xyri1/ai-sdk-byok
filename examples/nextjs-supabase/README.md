@@ -68,12 +68,12 @@ From the repository root:
 ```sh
 npm install                        # installs root dev dependencies
 cd examples/nextjs-supabase
-npm install                        # installs example dependencies, including ai-sdk-byok from the local workspace
+npm install                        # installs example dependencies, including local ai-sdk-byok packages
 ```
 
 ### 4. Build the package
 
-The example depends on `ai-sdk-byok` via `"file:../.."`. Make sure the package is built before running the dev server:
+The example depends on `ai-sdk-byok` via `"file:../../packages/core"` and `@ai-sdk-byok/supabase` via `"file:../../packages/supabase"`. Make sure the packages are built before running the dev server:
 
 ```sh
 # from the repository root
@@ -115,4 +115,4 @@ Click **Delete** next to any saved key in the list. The row is removed and the a
 
 - The demo hardcodes `userId = 'demo-user'` in [`lib/demo-user.ts`](lib/demo-user.ts). This is intentional for a local demo; a real application would use the authenticated user's ID.
 - The OpenAI-compatible provider requires `OPENAI_COMPATIBLE_BASE_URL` to be set for both model listing and chat.
-- The dev server runs with `--webpack` because the example targets Next.js 16 and uses the local workspace `file:../..` dependency.
+- The dev server runs with `--webpack` because the example targets Next.js 16 and uses local workspace package dependencies.

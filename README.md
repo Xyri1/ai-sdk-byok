@@ -13,12 +13,12 @@ The v0.1 scope is intentionally small: single-field `{ apiKey }` credentials, an
 - Credential objects that block `JSON.stringify` and object-level string coercion.
 - Opaque provider names so applications can define their own provider IDs.
 - Supabase Vault storage adapter with service-role-only RPC functions.
-- Edge-compatible package entrypoints for `ai-sdk-byok` and `ai-sdk-byok/supabase`.
+- Edge-compatible packages for `ai-sdk-byok` and `@ai-sdk-byok/supabase`.
 
 ## Install
 
 ```sh
-npm install ai-sdk-byok @supabase/supabase-js
+npm install ai-sdk-byok @ai-sdk-byok/supabase @supabase/supabase-js
 ```
 
 `@supabase/supabase-js` is an optional peer dependency. Install it when using the Supabase adapter.
@@ -29,7 +29,7 @@ Apply the migration in [`supabase/migrations`](supabase/migrations/202605190001_
 
 ```ts
 import { createByokManager } from 'ai-sdk-byok';
-import { supabaseAdapter } from 'ai-sdk-byok/supabase';
+import { supabaseAdapter } from '@ai-sdk-byok/supabase';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseAdmin = createClient(

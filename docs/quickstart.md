@@ -8,7 +8,7 @@ Apply the SQL in `supabase/migrations/202605190001_ai_sdk_byok_init.sql` to a Su
 
 ```ts
 import { createByokManager } from 'ai-sdk-byok';
-import { supabaseAdapter } from 'ai-sdk-byok/supabase';
+import { supabaseAdapter } from '@ai-sdk-byok/supabase';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseAdmin = createClient(

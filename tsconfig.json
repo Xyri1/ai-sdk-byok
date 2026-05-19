@@ -15,7 +15,7 @@
     "skipLibCheck": true,
     "paths": {
       "ai-sdk-byok": ["./packages/core/src/index.ts"],
-      "ai-sdk-byok/supabase": ["./packages/supabase/src/index.ts"]
+      "@ai-sdk-byok/supabase": ["./packages/supabase/src/index.ts"]
     }
   },
   "include": [
