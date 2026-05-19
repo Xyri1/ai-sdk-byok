@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "paths": {
+      "ai-sdk-byok": ["./packages/core/src/index.ts"],
+      "ai-sdk-byok/supabase": ["./packages/supabase/src/index.ts"]
+    }
+  },
+  "include": [
+    "packages/**/*.ts",
+    "tsup.config.ts",
+    "vitest.config.ts",
+    "eslint.config.js"
+  ]
+}

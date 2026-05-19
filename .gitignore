@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.turbo/
+.next/
+.vercel/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.github/
+**/supabase/.temp/

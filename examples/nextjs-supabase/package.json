@@ -1,0 +1,32 @@
+{
+  "name": "ai-sdk-byok-nextjs-supabase-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.78",
+    "@ai-sdk/cohere": "^3.0.36",
+    "@ai-sdk/deepseek": "^2.0.35",
+    "@ai-sdk/groq": "^3.0.39",
+    "@ai-sdk/mistral": "^3.0.37",
+    "@ai-sdk/openai": "latest",
+    "@ai-sdk/xai": "^3.0.91",
+    "@supabase/supabase-js": "latest",
+    "ai": "latest",
+    "ai-sdk-byok": "file:../..",
+    "next": "^16.2.6",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest"
+  }
+}
