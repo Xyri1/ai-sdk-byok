@@ -1,6 +1,6 @@
 {
   "name": "ai-sdk-byok",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Bring-your-own-key credential storage helpers for AI SDK applications.",
   "license": "MIT",
   "homepage": "https://github.com/Xyri1/ai-sdk-byok#readme",
