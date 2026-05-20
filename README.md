@@ -73,7 +73,9 @@ Omitting `label` stores and retrieves the credential under `default`.
 
 Copy this into your coding agent:
 
-> Integrate `ai-sdk-byok` into this project by following https://github.com/Xyri1/ai-sdk-byok/blob/main/docs/agent-implementation.md
+```text
+Integrate `ai-sdk-byok` into this project by following https://github.com/Xyri1/ai-sdk-byok/blob/master/docs/agent-implementation.md
+```
 
 ## API
 
