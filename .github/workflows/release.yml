@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish npm packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify package
+        run: npm run check
+
+      - name: Publish core package
+        run: npm publish -w ai-sdk-byok --provenance
+
+      - name: Publish Supabase adapter
+        run: npm publish -w @ai-sdk-byok/supabase --access public --provenance
