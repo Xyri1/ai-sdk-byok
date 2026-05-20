@@ -1,5 +1,7 @@
 # ai-sdk-byok
 
+English | [中文](README.zh-CN.md)
+
 Bring-your-own-key credential storage helpers for AI SDK applications.
 
 `ai-sdk-byok` helps applications accept user-owned provider API keys without building credential lifecycle plumbing from scratch. It stores per-user API-key credentials, retrieves them only when server-side provider construction needs them, and keeps list responses free of plaintext secrets.
