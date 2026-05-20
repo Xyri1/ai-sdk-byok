@@ -69,6 +69,12 @@ if (!credentials) {
 
 Omitting `label` stores and retrieves the credential under `default`.
 
+## Implement with an Agent
+
+Copy this into your coding agent:
+
+> Integrate `ai-sdk-byok` into this project by following https://github.com/Xyri1/ai-sdk-byok/blob/main/docs/agent-implementation.md
+
 ## API
 
 ### `createByokManager(options)`
@@ -115,6 +121,7 @@ The Supabase client must be created with a server-side secret key and must never
 ## Documentation
 
 - [Quickstart](docs/quickstart.md)
+- [Agent implementation guide](docs/agent-implementation.md)
 - [Architecture](docs/architecture.md)
 - [Threat model](docs/threat-model.md)
 - [Integration testing](docs/integration-testing.md)
