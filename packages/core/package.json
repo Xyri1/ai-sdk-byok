@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Bring-your-own-key credential storage helpers for AI SDK applications.",
   "license": "MIT",
+  "homepage": "https://github.com/Xyri1/ai-sdk-byok#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Xyri1/ai-sdk-byok.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/Xyri1/ai-sdk-byok/issues"
+  },
   "type": "module",
   "sideEffects": false,
   "engines": {
