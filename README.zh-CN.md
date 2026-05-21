@@ -73,7 +73,7 @@ if (!credentials) {
 
 ## 通过 Agent 集成
 
-将以下内容粘贴到你的 Agent 中：
+将下面这句话发给你的编码 Agent，它会自动完成完整的接入流程：安装依赖、应用数据库迁移、初始化 manager，以及添加密钥存取的调用示例。
 
 ```text
 Integrate `ai-sdk-byok` into this project by following https://github.com/Xyri1/ai-sdk-byok/blob/master/docs/agent-implementation.md

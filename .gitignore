@@ -10,3 +10,4 @@ coverage/
 !.env.example
 .github/
 **/supabase/.temp/
+AGENTS.local.md
