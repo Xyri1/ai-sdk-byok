@@ -29,9 +29,18 @@ export interface GetKeyInput {
   label?: string;
 }
 
+export interface GetKeyByIdInput {
+  userId: string;
+  keyId: string;
+}
+
 export interface DeleteKeyInput {
   userId: string;
   keyId: string;
+}
+
+export interface KeyCredentialRecord extends KeyMetadata {
+  credentials: ApiKeyCredentials;
 }
 
 export interface SaveStorageInput {
@@ -52,15 +61,25 @@ export interface GetStorageInput {
   label: string;
 }
 
+export interface GetStorageByIdInput {
+  userId: string;
+  keyId: string;
+}
+
 export interface DeleteStorageInput {
   userId: string;
   keyId: string;
+}
+
+export interface StoredKeyCredentialRecord extends KeyMetadata {
+  credentials: ApiKeyCredentials;
 }
 
 export interface ByokStorageAdapter {
   save(input: SaveStorageInput): Promise<KeyMetadata>;
   list(input: ListStorageInput): Promise<KeyMetadata[]>;
   get(input: GetStorageInput): Promise<ApiKeyCredentials | null>;
+  getById(input: GetStorageByIdInput): Promise<StoredKeyCredentialRecord | null>;
   delete(input: DeleteStorageInput): Promise<void>;
 }
 
@@ -73,6 +92,7 @@ export interface ByokManager {
     save(input: SaveKeyInput): Promise<KeyMetadata>;
     list(input: ListKeysInput): Promise<KeyMetadata[]>;
     get(input: GetKeyInput): Promise<ApiKeyCredentials | null>;
+    getById(input: GetKeyByIdInput): Promise<KeyCredentialRecord | null>;
     delete(input: DeleteKeyInput): Promise<void>;
   };
 }

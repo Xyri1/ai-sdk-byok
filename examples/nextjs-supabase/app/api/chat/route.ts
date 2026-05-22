@@ -10,6 +10,7 @@ import { streamText } from 'ai';
 import { AiSdkByokAdapterError } from 'ai-sdk-byok';
 import { byok } from '@/lib/byok';
 import { demoUserId } from '@/lib/demo-user';
+import { errorFields, logger } from '@/lib/logger';
 import { isSupportedProvider, type SupportedProvider } from '@/lib/providers';
 
 export const runtime = 'nodejs';
@@ -31,36 +32,42 @@ export async function POST(request: Request): Promise<Response> {
   const prompt = textField(body.prompt);
 
   if (keyId.length === 0) {
+    logger.warn('chat.rejected', { reason: 'missing-key' });
     return Response.json({ error: 'Choose a saved key.' }, { status: 400 });
   }
 
   if (prompt.length === 0 || prompt.length > 4000) {
+    logger.warn('chat.rejected', { reason: 'invalid-prompt', keyId, promptLength: prompt.length });
     return Response.json({ error: 'Prompt must be between 1 and 4000 characters.' }, { status: 400 });
   }
 
   try {
-    const keys = await byok.keys.list({ userId: demoUserId });
-    const selectedKey = keys.find((key) => key.id === keyId);
+    logger.info('chat.started', {
+      userId: demoUserId,
+      keyId,
+      requestedModel,
+      promptLength: prompt.length,
+    });
+
+    const selectedKey = await byok.keys.getById({ userId: demoUserId, keyId });
 
     if (!selectedKey) {
+      logger.warn('chat.rejected', { reason: 'key-not-found', keyId });
       return Response.json({ error: 'Choose a saved key.' }, { status: 404 });
     }
 
     if (!isSupportedProvider(selectedKey.provider)) {
+      logger.warn('chat.rejected', { reason: 'unsupported-provider', keyId, provider: selectedKey.provider });
       return Response.json({ error: 'Choose a supported provider key.' }, { status: 400 });
     }
 
-    const credentials = await byok.keys.get({
-      userId: demoUserId,
+    const model = createModel(selectedKey.provider, selectedKey.credentials.apiKey, requestedModel);
+
+    logger.info('chat.stream.created', {
+      keyId,
       provider: selectedKey.provider,
-      label: selectedKey.label,
+      model: requestedModel,
     });
-
-    if (credentials === null) {
-      return Response.json({ error: 'The selected key could not be retrieved.' }, { status: 404 });
-    }
-
-    const model = createModel(selectedKey.provider, credentials.apiKey, requestedModel);
 
     const result = streamText({
       model,
@@ -70,17 +77,15 @@ export async function POST(request: Request): Promise<Response> {
     return result.toTextStreamResponse();
   } catch (error) {
     if (error instanceof AiSdkByokAdapterError) {
+      logger.error('chat.key-retrieval.failed', { keyId, ...errorFields(error) });
       return Response.json(
         { error: 'Supabase could not retrieve the stored key. Check the migration and server secret key.' },
         { status: 500 },
       );
     }
 
-    if (error instanceof Error) {
-      return Response.json({ error: error.message }, { status: 400 });
-    }
-
-    throw error;
+    logger.error('chat.failed', { keyId, requestedModel, ...errorFields(error) });
+    return Response.json({ error: 'The chat request could not be completed.' }, { status: 400 });
   }
 }
 
@@ -114,6 +119,7 @@ function createModel(provider: SupportedProvider, apiKey: string, requestedModel
       const baseURL = process.env.OPENAI_COMPATIBLE_BASE_URL;
 
       if (!baseURL) {
+        logger.warn('chat.provider-config.missing', { provider: 'openai-compatible', variable: 'OPENAI_COMPATIBLE_BASE_URL' });
         throw new Error('OPENAI_COMPATIBLE_BASE_URL is required for OpenAI-compatible chat');
       }
 

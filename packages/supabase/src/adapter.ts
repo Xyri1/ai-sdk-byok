@@ -3,6 +3,7 @@ import {
   type ApiKeyCredentials,
   type ByokManagerOptions,
   type KeyMetadata,
+  type StoredKeyCredentialRecord,
 } from 'ai-sdk-byok';
 
 interface SupabaseResponse<T> {
@@ -37,6 +38,10 @@ interface KeyMetadataRow {
   key_hint: string;
   created_at: string;
   updated_at: string;
+}
+
+interface CredentialRecordRow extends KeyMetadataRow {
+  credentials: unknown;
 }
 
 function adapterError(operation: string, cause: unknown): AiSdkByokAdapterError {
@@ -95,6 +100,19 @@ function parseCredentials(value: unknown): ApiKeyCredentials {
   }
 
   return { apiKey: (parsed as { apiKey: string }).apiKey };
+}
+
+function parseCredentialRecord(value: unknown): StoredKeyCredentialRecord {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Error('Credential record RPC returned an invalid payload');
+  }
+
+  const row = value as CredentialRecordRow;
+
+  return {
+    ...toMetadata(row),
+    credentials: parseCredentials(row.credentials),
+  };
 }
 
 export function supabaseAdapter(options: SupabaseAdapterOptions): ByokManagerOptions['storage'] {
@@ -160,6 +178,27 @@ export function supabaseAdapter(options: SupabaseAdapterOptions): ByokManagerOpt
         return parseCredentials(result.data);
       } catch (error) {
         throw adapterError('get parse', error);
+      }
+    },
+
+    async getById(input) {
+      const result = await client.rpc('ai_sdk_byok_get_credentials_by_id', {
+        p_user_id: input.userId,
+        p_key_id: input.keyId,
+      });
+
+      if (result.error) {
+        throw adapterError('getById', result.error);
+      }
+
+      if (result.data === null) {
+        return null;
+      }
+
+      try {
+        return parseCredentialRecord(result.data);
+      } catch (error) {
+        throw adapterError('getById parse', error);
       }
     },
 

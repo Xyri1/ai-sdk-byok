@@ -2,6 +2,7 @@ import { AiSdkByokValidationError } from './errors.js';
 import type {
   ApiKeyCredentials,
   DeleteKeyInput,
+  GetKeyByIdInput,
   GetKeyInput,
   ListKeysInput,
   SaveKeyInput,
@@ -93,6 +94,17 @@ export function validateGetInput(input: GetKeyInput) {
     userId: input.userId,
     provider: input.provider,
     label: normalizeLabel(input.label),
+  };
+}
+
+export function validateGetByIdInput(input: GetKeyByIdInput) {
+  assertRecord(input, 'input');
+  assertString(input.userId, 'userId', 256);
+  assertString(input.keyId, 'keyId', 128);
+
+  return {
+    userId: input.userId,
+    keyId: input.keyId,
   };
 }
 

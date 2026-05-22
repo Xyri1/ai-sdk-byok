@@ -1,6 +1,7 @@
 import { AiSdkByokAdapterError } from 'ai-sdk-byok';
 import { byok } from '@/lib/byok';
 import { demoUserId } from '@/lib/demo-user';
+import { errorFields, logger } from '@/lib/logger';
 import { getModelEndpoint, isSupportedProvider } from '@/lib/providers';
 
 interface ModelOption {
@@ -21,58 +22,65 @@ export async function GET(request: Request): Promise<Response> {
   const keyId = new URL(request.url).searchParams.get('keyId')?.trim() ?? '';
 
   if (keyId.length === 0) {
+    logger.warn('models.rejected', { reason: 'missing-key' });
     return Response.json({ error: 'Choose a saved key.' }, { status: 400 });
   }
 
   try {
-    const keys = await byok.keys.list({ userId: demoUserId });
-    const selectedKey = keys.find((key) => key.id === keyId);
+    logger.info('models.started', { userId: demoUserId, keyId });
+    const selectedKey = await byok.keys.getById({ userId: demoUserId, keyId });
 
     if (!selectedKey) {
+      logger.warn('models.rejected', { reason: 'key-not-found', keyId });
       return Response.json({ error: 'Choose a saved key.' }, { status: 404 });
     }
 
     if (!isSupportedProvider(selectedKey.provider)) {
+      logger.warn('models.rejected', { reason: 'unsupported-provider', keyId, provider: selectedKey.provider });
       return Response.json({ error: 'Choose a supported provider key.' }, { status: 400 });
     }
 
-    const credentials = await byok.keys.get({
-      userId: demoUserId,
+    const endpoint = getModelEndpoint(selectedKey.provider, selectedKey.credentials.apiKey);
+    logger.info('models.fetch.started', {
+      keyId,
       provider: selectedKey.provider,
-      label: selectedKey.label,
+      providerLabel: endpoint.providerLabel,
     });
 
-    if (credentials === null) {
-      return Response.json({ error: 'The selected key could not be retrieved.' }, { status: 404 });
-    }
-
-    const endpoint = getModelEndpoint(selectedKey.provider, credentials.apiKey);
     const response = await fetch(endpoint.url, {
       headers: endpoint.headers,
       cache: 'no-store',
     });
 
     if (!response.ok) {
+      logger.warn('models.fetch.failed', {
+        keyId,
+        provider: selectedKey.provider,
+        status: response.status,
+      });
       return Response.json({ error: `${endpoint.providerLabel} models could not be loaded.` }, { status: 502 });
     }
 
     const payload = await response.json();
     const models = normalizeModels(payload);
+    logger.info('models.fetch.completed', {
+      keyId,
+      provider: selectedKey.provider,
+      count: models.length,
+    });
 
     return Response.json({ models });
   } catch (error) {
     if (error instanceof AiSdkByokAdapterError) {
+      logger.error('models.key-retrieval.failed', { keyId, ...errorFields(error) });
       return Response.json(
         { error: 'Supabase could not retrieve the selected key. Check the migration and server secret key.' },
         { status: 500 },
       );
     }
 
-    if (error instanceof Error) {
-      return Response.json({ error: error.message }, { status: 400 });
-    }
-
-    throw error;
+    logger.error('models.failed', { keyId, ...errorFields(error) });
+    return Response.json({ error: 'Models could not be loaded for the selected key.' }, { status: 400 });
   }
 }
 

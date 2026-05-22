@@ -11,3 +11,5 @@ coverage/
 .github/
 **/supabase/.temp/
 AGENTS.local.md
+.agents/
+skills-lock.json

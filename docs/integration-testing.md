@@ -6,12 +6,12 @@ Use a disposable Supabase project or development branch for migration validation
 
 - Supabase Vault is available and enabled.
 - A server-side Supabase key with `service_role` privileges is available only in local environment variables.
-- The migration in `supabase/migrations/202605190001_ai_sdk_byok_init.sql` has been reviewed for the target project.
+- The SQL migrations in `supabase/migrations` have been reviewed for the target project.
 
 ## Suggested Setup
 
 1. Create a Supabase development branch or disposable project.
-2. Apply `supabase/migrations/202605190001_ai_sdk_byok_init.sql`.
+2. Apply the SQL files in `supabase/migrations` in order.
 3. Initialize a server-side client with the project URL and secret key.
 4. Create a manager with `createByokManager({ storage: supabaseAdapter({ client }) })`.
 5. Exercise the lifecycle with a throwaway credential:

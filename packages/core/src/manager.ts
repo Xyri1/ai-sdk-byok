@@ -1,6 +1,7 @@
 import { protectCredentials } from './credential-proxy.js';
 import {
   validateDeleteInput,
+  validateGetByIdInput,
   validateGetInput,
   validateListInput,
   validateSaveInput,
@@ -29,6 +30,20 @@ export function createByokManager(options: ByokManagerOptions): ByokManager {
         }
 
         return protectCredentials(credentials);
+      },
+
+      async getById(input) {
+        const validated = validateGetByIdInput(input);
+        const record = await options.storage.getById(validated);
+
+        if (record === null) {
+          return null;
+        }
+
+        return {
+          ...record,
+          credentials: protectCredentials(record.credentials),
+        };
       },
 
       async delete(input) {

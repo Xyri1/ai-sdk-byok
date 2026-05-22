@@ -67,26 +67,28 @@ When stopping, explain which condition failed and what would need to change befo
    ```
 
 6. Add server-side save, list, and delete flows for the authenticated user's provider keys.
-7. Retrieve credentials only when constructing an AI SDK provider, then let the credentials fall out of scope:
+7. Retrieve credentials only when constructing an AI SDK provider, then let the credentials fall out of scope. Prefer `getById` when a user selected a metadata row from `keys.list()`:
 
    ```ts
    import { createOpenAI } from '@ai-sdk/openai';
 
-   const credentials = await byok.keys.get({
+   const record = await byok.keys.getById({
      userId,
-     provider: 'openai',
+     keyId: selectedKeyId,
    });
 
-   if (!credentials) {
-     throw new Error('No OpenAI key configured');
+   if (!record || record.provider !== 'openai') {
+     throw new Error('Choose an OpenAI key');
    }
 
-   const openai = createOpenAI({ apiKey: credentials.apiKey });
+   const openai = createOpenAI({ apiKey: record.credentials.apiKey });
    ```
 
-8. Keep list responses metadata-only. Never return plaintext credentials from routes, actions, loaders, or components.
+8. Keep list responses metadata-only. Client Components may pass key metadata ids, but server routes must derive `userId` from trusted auth/session state and use returned metadata for provider selection.
 9. Add or update tests for the new server-side flows.
 10. Run the project's verification commands.
+
+Optional: wrap storage with `cachedStorage` only when the app owns a server-only credential cache. Redis-style cache values include plaintext credentials, require explicit TTLs, and are not a first-party adapter package. Do not cache metadata/list responses as part of this integration.
 
 ## Security Rules
 
@@ -94,8 +96,9 @@ When stopping, explain which condition failed and what would need to change befo
 - Never log, serialize, or return credentials.
 - Never pass plaintext credentials into Client Components or browser-visible payloads.
 - Store only `{ apiKey: string }` credentials.
-- Use `keys.get` as late as possible, only when constructing a provider.
+- Use `keys.getById` or `keys.get` as late as possible, only when constructing a provider.
 - Treat Supabase credential RPC functions as service-role-only operations.
+- Treat Redis or any other credential cache as trusted secret infrastructure and never expose it to browser code.
 
 ## Useful References
 

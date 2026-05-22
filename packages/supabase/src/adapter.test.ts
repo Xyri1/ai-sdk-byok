@@ -28,6 +28,11 @@ const metadataRow = {
   updated_at: '2026-05-19T00:00:00.000Z',
 };
 
+const credentialRecordRow = {
+  ...metadataRow,
+  credentials: JSON.stringify({ apiKey: 'sk-test-1234' }),
+};
+
 function createRpc(data: unknown, error: { message?: string } | null = null): SupabaseClientLike['rpc'] {
   return vi.fn(async () => ({ data, error }));
 }
@@ -203,6 +208,60 @@ describe('supabaseAdapter', () => {
     await expect(adapter.get({ userId: 'user_1', provider: 'openai', label: 'default' })).rejects.toThrow(
       AiSdkByokAdapterError,
     );
+  });
+
+  it('retrieves credentials and metadata by key id', async () => {
+    const client = createClient({
+      rpc: createRpc(credentialRecordRow),
+    });
+    const adapter = supabaseAdapter({ client });
+
+    await expect(adapter.getById({ userId: 'user_1', keyId: 'key_1' })).resolves.toEqual({
+      id: 'key_1',
+      userId: 'user_1',
+      provider: 'openai',
+      label: 'default',
+      keyHint: '1234',
+      createdAt: '2026-05-19T00:00:00.000Z',
+      updatedAt: '2026-05-19T00:00:00.000Z',
+      credentials: { apiKey: 'sk-test-1234' },
+    });
+
+    expect(client.rpc).toHaveBeenCalledWith('ai_sdk_byok_get_credentials_by_id', {
+      p_user_id: 'user_1',
+      p_key_id: 'key_1',
+    });
+  });
+
+  it('returns null when key-id retrieval finds no credential', async () => {
+    const client = createClient({
+      rpc: createRpc(null),
+    });
+    const adapter = supabaseAdapter({ client });
+
+    await expect(adapter.getById({ userId: 'user_1', keyId: 'key_1' })).resolves.toBeNull();
+  });
+
+  it('wraps malformed credential payloads returned by key-id retrieval', async () => {
+    const client = createClient({
+      rpc: createRpc({
+        ...credentialRecordRow,
+        credentials: JSON.stringify({ apiKey: 'sk-test-1234', extra: true }),
+      }),
+    });
+    const adapter = supabaseAdapter({ client });
+
+    await expect(adapter.getById({ userId: 'user_1', keyId: 'key_1' })).rejects.toThrow(AiSdkByokAdapterError);
+  });
+
+  it('wraps key-id retrieval RPC errors without credential values', async () => {
+    const client = createClient({
+      rpc: createRpc(null, { message: 'database unavailable' }),
+    });
+    const adapter = supabaseAdapter({ client });
+
+    await expect(adapter.getById({ userId: 'user_1', keyId: 'key_1' })).rejects.toThrow(AiSdkByokAdapterError);
+    await expect(adapter.getById({ userId: 'user_1', keyId: 'key_1' })).rejects.not.toThrow('sk-test-1234');
   });
 
   it('deletes credentials through RPC', async () => {

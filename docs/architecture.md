@@ -10,13 +10,24 @@ The core manager owns:
 - label normalization;
 - key-hint derivation;
 - metadata-only public write responses;
-- proxy wrapping of returned plaintext credentials.
+- proxy wrapping of returned plaintext credentials;
+- optional cache composition through `cachedStorage`.
 
 Adapters receive normalized inputs and return typed metadata or credentials.
+
+`keys.getById({ userId, keyId })` returns a credential record containing safe metadata plus proxy-wrapped credentials. This lets server routes select the AI SDK provider from stored metadata after a browser submits only a metadata id.
 
 ## Supabase Entrypoint
 
 The Supabase adapter uses a server-side Supabase client initialized with a secret key for credential-touching RPC calls and metadata listing. Supabase secret keys are the current replacement for legacy `service_role` API keys. Supabase Vault performs encryption and decryption inside the database boundary.
+
+Supabase is the first concrete durable adapter for key-id retrieval. The optional cache layer is adapter-agnostic and does not depend on Supabase RPC names, Vault secret ids, tables, or migrations.
+
+## Optional Credential Cache
+
+`cachedStorage` wraps a storage adapter below the core manager. It caches internal serializable credential records for `getById`, then the manager proxy-wraps credentials before returning public records.
+
+Cache entries are scoped by trusted server-side `userId` plus `keyId`; apps may hash that tuple before storing Redis keys. Cache misses fall back to durable storage and may populate the cache. `save`/rotation invalidates the returned metadata id, and `delete` invalidates before and after durable deletion. TTL is required and should be short, typically 30–120 seconds. Metadata/list caching is intentionally out of scope.
 
 ## Database Boundary
 

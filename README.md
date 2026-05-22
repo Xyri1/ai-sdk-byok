@@ -11,10 +11,11 @@ The v0.1 scope is intentionally small: single-field `{ apiKey }` credentials, an
 ## Features
 
 - Metadata-only `save`, `list`, and `delete` flows for user API keys.
-- Explicit `get` flow for retrieving plaintext credentials as late as possible.
+- Explicit `get` and `getById` flows for retrieving plaintext credentials as late as possible.
 - Credential objects that block `JSON.stringify` and object-level string coercion.
 - Opaque provider names so applications can define their own provider IDs.
 - Supabase Vault storage adapter with service-role-only RPC functions.
+- Optional adapter-agnostic `cachedStorage` wrapper for app-owned credential caches.
 - Edge-compatible packages for `ai-sdk-byok` and `@ai-sdk-byok/supabase`.
 
 ## Install
@@ -27,7 +28,7 @@ npm install ai-sdk-byok @ai-sdk-byok/supabase @supabase/supabase-js
 
 ## Quickstart
 
-Apply the migration in [`supabase/migrations`](supabase/migrations/202605190001_ai_sdk_byok_init.sql) to a Supabase project with Vault enabled, then create a manager in trusted server-side code:
+Apply the SQL migrations in [`supabase/migrations`](supabase/migrations) in order to a Supabase project with Vault enabled, then create a manager in trusted server-side code:
 
 ```ts
 import { createByokManager } from 'ai-sdk-byok';
@@ -54,22 +55,43 @@ await byok.keys.save({
 });
 ```
 
-Retrieve the key only when constructing a provider:
+Retrieve the key only when constructing a provider. If the browser selected a key from `keys.list()`, pass only the metadata `id` to trusted server code and derive `userId` from auth/session state:
 
 ```ts
-const credentials = await byok.keys.get({
+const record = await byok.keys.getById({
   userId: 'user_123',
-  provider: 'openai',
+  keyId: selectedKeyId,
 });
 
-if (!credentials) {
-  throw new Error('No OpenAI key configured');
+if (!record) {
+  throw new Error('Selected key was not found');
 }
 
-// Pass credentials.apiKey to your AI SDK provider factory here.
+// Use record.provider for provider selection, not a browser-provided provider.
+// Pass record.credentials.apiKey to your AI SDK provider factory here.
 ```
 
 Omitting `label` stores and retrieves the credential under `default`.
+
+Apps that address credentials by provider and label can continue to use `keys.get({ userId, provider, label })`.
+
+### Optional credential cache
+
+`cachedStorage` can wrap any storage adapter that supports key-id retrieval. It is disabled unless the app wires a cache backend:
+
+```ts
+import { cachedStorage, createByokManager } from 'ai-sdk-byok';
+
+const byok = createByokManager({
+  storage: cachedStorage({
+    storage: supabaseAdapter({ client: supabaseAdmin }),
+    cache: appCredentialCache,
+    ttlMs: 60_000,
+  }),
+});
+```
+
+Cache entries contain plaintext credential records and must be server-only trusted secret infrastructure. Derive cache keys from trusted server-side `userId` plus `keyId`; never from browser-provided user ids. Read-path cache failures fall back to durable storage, while save/delete invalidation failures are reported as operation errors. Use short TTLs such as 30–120 seconds. Metadata/list caching is out of scope.
 
 ## Implement with an Agent
 
@@ -96,6 +118,7 @@ The manager exposes:
 | `keys.save(input)` | Stores or rotates one `{ apiKey }` credential for `(userId, provider, label)`. Returns metadata only. |
 | `keys.list(input)` | Lists metadata for a user, ordered by latest update first. Never returns plaintext credentials. |
 | `keys.get(input)` | Returns proxy-wrapped `{ apiKey }` credentials, or `null` when no key exists. |
+| `keys.getById(input)` | Returns metadata plus proxy-wrapped `{ apiKey }` credentials for `{ userId, keyId }`, or `null`. |
 | `keys.delete(input)` | Deletes a key by `userId` and `keyId`. Public API deletion is idempotent. |
 
 ### `supabaseAdapter(options)`
@@ -112,9 +135,10 @@ The Supabase client must be created with a server-side secret key and must never
 
 - Store only single-field credentials shaped exactly as `{ apiKey: string }`.
 - Do not log, serialize, or return credentials from request handlers.
-- Use `keys.get` as late as possible and let returned credentials fall out of scope after provider construction.
+- Use `keys.getById` or `keys.get` as late as possible and let returned credentials fall out of scope after provider construction.
 - Metadata includes a short `keyHint`, but never exposes the underlying Vault secret ID.
 - Supabase credential RPC functions are intended for service-role access only.
+- Treat Redis or any other plaintext credential cache as trusted secret infrastructure with a TTL-bounded stale-credential window.
 
 ## Runtime support
 

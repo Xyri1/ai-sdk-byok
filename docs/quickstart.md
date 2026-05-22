@@ -2,7 +2,7 @@
 
 ## 1. Apply the Supabase Migration
 
-Apply the SQL in `supabase/migrations/202605190001_ai_sdk_byok_init.sql` to a Supabase project with Vault enabled.
+Apply the SQL files in `supabase/migrations` in order to a Supabase project with Vault enabled.
 
 ## 2. Create a Server-Side Manager
 
@@ -41,13 +41,17 @@ Omitting `label` stores the credential under `default`.
 import { streamText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 
-const credentials = await byok.keys.get({ userId, provider: 'openai' });
+const record = await byok.keys.getById({ userId, keyId: selectedKeyId });
 
-if (!credentials) {
-  throw new Error('No OpenAI key configured');
+if (!record) {
+  throw new Error('Selected key was not found');
 }
 
-const openai = createOpenAI({ apiKey: credentials.apiKey });
+if (record.provider !== 'openai') {
+  throw new Error('Choose an OpenAI key');
+}
+
+const openai = createOpenAI({ apiKey: record.credentials.apiKey });
 
 const result = streamText({
   model: openai('gpt-5'),
@@ -56,3 +60,22 @@ const result = streamText({
 ```
 
 Retrieve credentials as late as possible and let them fall out of scope after provider construction.
+`selectedKeyId` may come from browser-visible metadata, but `userId` must come from trusted server-side auth/session state. Use `record.provider` for provider selection instead of trusting a provider value sent by the browser. Label-oriented integrations can still use `keys.get({ userId, provider, label })`.
+
+## Optional Credential Cache
+
+For lower-latency key-id retrieval, apps may wrap storage with `cachedStorage` and an app-owned cache backend:
+
+```ts
+import { cachedStorage, createByokManager } from 'ai-sdk-byok';
+
+export const byok = createByokManager({
+  storage: cachedStorage({
+    storage: supabaseAdapter({ client: supabaseAdmin }),
+    cache: appCredentialCache,
+    ttlMs: 60_000,
+  }),
+});
+```
+
+The cache interface is generic and adapter-agnostic; Supabase is only the first concrete durable adapter. Cache values include plaintext credentials, so Redis-style backends must be server-only trusted secret infrastructure. Use trusted server-side `userId` plus `keyId` for cache keys, short TTLs such as 30–120 seconds, and rely on save/delete invalidation. Metadata/list caching is out of scope.

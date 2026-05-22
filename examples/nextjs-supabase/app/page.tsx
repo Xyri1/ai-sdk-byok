@@ -3,12 +3,14 @@ import { ChatDemo } from './chat-demo';
 import { KeyManagement } from './key-management';
 import { byok } from '@/lib/byok';
 import { demoUserId } from '@/lib/demo-user';
+import { errorFields, logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   try {
     const keys = await byok.keys.list({ userId: demoUserId });
+    logger.info('keys.list.completed', { userId: demoUserId, count: keys.length });
 
     return (
       <main className="shell">
@@ -26,6 +28,8 @@ export default async function Page() {
     if (!(error instanceof AiSdkByokAdapterError)) {
       throw error;
     }
+
+    logger.error('keys.list.failed', errorFields(error));
 
     return (
       <main className="shell">
