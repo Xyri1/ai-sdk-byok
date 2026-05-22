@@ -1,6 +1,6 @@
 {
   "name": "@ai-sdk-byok/supabase",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Supabase storage adapter for ai-sdk-byok.",
   "license": "MIT",
   "homepage": "https://github.com/Xyri1/ai-sdk-byok#readme",
@@ -30,7 +30,7 @@
     "README.md"
   ],
   "dependencies": {
-    "ai-sdk-byok": "0.1.1"
+    "ai-sdk-byok": "0.2.0"
   },
   "peerDependencies": {
     "@supabase/supabase-js": ">=2.0.0"

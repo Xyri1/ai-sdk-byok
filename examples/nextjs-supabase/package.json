@@ -16,10 +16,10 @@
     "@ai-sdk/mistral": "^3.0.37",
     "@ai-sdk/openai": "latest",
     "@ai-sdk/xai": "^3.0.91",
-    "@ai-sdk-byok/supabase": "0.1.1",
+    "@ai-sdk-byok/supabase": "0.2.0",
     "@supabase/supabase-js": "latest",
     "ai": "latest",
-    "ai-sdk-byok": "0.1.1",
+    "ai-sdk-byok": "0.2.0",
     "next": "^16.2.6",
     "react": "latest",
     "react-dom": "latest"
