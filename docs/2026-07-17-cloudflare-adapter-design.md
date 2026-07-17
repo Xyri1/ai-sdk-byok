@@ -168,7 +168,17 @@ The schema is deliberately shard-friendly so the escape hatch needs no schema ch
 - **In-memory KV fake** implementing `get/put/delete` with `expirationTtl` bookkeeping.
 - **Crypto tests:** round-trip; wrong-key rejection; AAD mismatch rejection (swap ciphertexts between two rows and prove decryption fails); unknown version-prefix rejection.
 - **Security-invariant tests** mirroring the Supabase suite: `save`/`list` output never contains ciphertext or plaintext; end-to-end proof that returned credentials stay proxy-wrapped against `JSON.stringify`.
-- **Follow-up (not v1):** an integration pass under `@cloudflare/vitest-pool-workers` against real workerd, analogous to `docs/integration-testing.md` for Supabase.
+- **Workerd end-to-end:** the runnable example app (next section) carries a `@cloudflare/vitest-pool-workers` suite that boots the Worker in real workerd with local D1/KV bindings and drives the full HTTP flow.
+
+## Example App (`examples/cloudflare-worker`)
+
+A runnable end-to-end example lives in the monorepo as an npm workspace, mirroring the role `examples/nextjs-supabase` plays for Supabase:
+
+- **Minimal Hono Worker:** `/api/keys` save/list/delete routes plus `/api/chat`, which retrieves the stored credential server-side (`keys.getById`) and calls the AI SDK (`generateText` with `@ai-sdk/openai`) using the user's own key. Plaintext never leaves the route handler.
+- **Single static HTML page** (vanilla JS, served via Workers static assets): key management UI (save, list, delete) and a chat box that exercises the saved key. Browser responses stay metadata-only, per the AGENTS.md example expectations.
+- **Identity is a hardcoded demo user**, clearly documented as a placeholder for real session auth (e.g. better-auth).
+- **Runs fully locally:** `wrangler dev` with miniflare-backed D1/KV and the master key in `.dev.vars` — no Cloudflare account required.
+- **End-to-end test under `@cloudflare/vitest-pool-workers`:** real workerd, local bindings, D1 migrations applied in test setup, and the outbound OpenAI call intercepted with `fetchMock` to assert that the saved key (and only the saved key) reaches the provider and that all browser-facing responses are metadata-only.
 
 ## Spec and Docs Impact
 
@@ -176,6 +186,7 @@ The schema is deliberately shard-friendly so the escape hatch needs no schema ch
 - `AGENTS.md` — remove "Non-Supabase storage adapters" from Out Of Scope; narrow "Application-side cryptography" to exclude the sealed-credential scheme owned by `@ai-sdk-byok/cloudflare`; add the package to Repository Layout, Public API Requirements, and Security Invariants (master-key custody, ciphertext never in metadata or errors).
 - `docs/threat-model.md` — new Cloudflare section: protects against D1/KV storage compromise without the master key; does not protect against master key + storage compromise together, nor stale KV entries surviving until propagation + TTL; losing the master key means users re-enter keys (acceptable: API keys are re-enterable; this is not durable-data loss).
 - `docs/architecture.md`, root `README.md` + `README.zh-CN.md`, package README with the Workers quickstart (generate key → `wrangler secret put` → apply migration → compose with `cachedStorage`).
+- Root `package.json` workspaces and `AGENTS.md` repository layout gain `examples/cloudflare-worker`.
 
 ## Out of Scope (v1)
 
@@ -183,4 +194,3 @@ The schema is deliberately shard-friendly so the escape hatch needs no schema ch
 - Master-key rotation tooling (the `v1.` format prefix reserves the seam).
 - Cloudflare HTTP API access to D1 from non-Workers runtimes.
 - Durable Objects or R2 backends.
-- An `examples/` Worker app (README quickstart only; example app is a candidate follow-up).
