@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ai-sdk-byok — Cloudflare example</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+    fieldset { border: 1px solid #ccc; border-radius: 8px; margin-bottom: 1.5rem; }
+    label { display: block; margin: 0.5rem 0 0.25rem; }
+    input, select, button, textarea { font: inherit; padding: 0.4rem; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { text-align: left; padding: 0.3rem; border-bottom: 1px solid #eee; }
+    #answer { white-space: pre-wrap; background: #f6f6f6; border-radius: 8px; padding: 0.75rem; min-height: 2rem; }
+    .error { color: #b00020; }
+  </style>
+</head>
+<body>
+  <h1>Bring your own key</h1>
+  <p>Keys are sealed with AES-256-GCM before touching D1/KV. The browser only ever sees metadata.</p>
+
+  <fieldset>
+    <legend>Save a key</legend>
+    <form id="save-form">
+      <label for="provider">Provider</label>
+      <select id="provider"><option value="openai">openai</option></select>
+      <label for="label">Label (optional)</label>
+      <input id="label" placeholder="default" />
+      <label for="apiKey">API key</label>
+      <input id="apiKey" type="password" required placeholder="sk-..." />
+      <p><button type="submit">Save</button> <span id="save-error" class="error"></span></p>
+    </form>
+  </fieldset>
+
+  <fieldset>
+    <legend>Your keys</legend>
+    <table>
+      <thead><tr><th></th><th>Provider</th><th>Label</th><th>Hint</th><th>Updated</th><th></th></tr></thead>
+      <tbody id="key-rows"></tbody>
+    </table>
+  </fieldset>
+
+  <fieldset>
+    <legend>Chat with the selected key</legend>
+    <form id="chat-form">
+      <textarea id="prompt" rows="3" style="width: 100%" placeholder="Say hello"></textarea>
+      <p><button type="submit">Send</button> <span id="chat-error" class="error"></span></p>
+    </form>
+    <div id="answer"></div>
+  </fieldset>
+
+  <script>
+    const keyRows = document.getElementById('key-rows');
+    let selectedKeyId = null;
+
+    async function refreshKeys() {
+      const keys = await (await fetch('/api/keys')).json();
+      if (!keys.some((key) => key.id === selectedKeyId)) selectedKeyId = keys[0]?.id ?? null;
+      keyRows.innerHTML = '';
+      for (const key of keys) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><input type="radio" name="selected" ${key.id === selectedKeyId ? 'checked' : ''}></td>
+          <td>${key.provider}</td><td>${key.label}</td><td>…${key.keyHint}</td>
+          <td>${new Date(key.updatedAt).toLocaleString()}</td>
+          <td><button type="button">Delete</button></td>`;
+        row.querySelector('input').onchange = () => { selectedKeyId = key.id; };
+        row.querySelector('button').onclick = async () => {
+          await fetch(`/api/keys/${key.id}`, { method: 'DELETE' });
+          refreshKeys();
+        };
+        keyRows.append(row);
+      }
+    }
+
+    document.getElementById('save-form').onsubmit = async (event) => {
+      event.preventDefault();
+      const errorEl = document.getElementById('save-error');
+      errorEl.textContent = '';
+      const response = await fetch('/api/keys', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          provider: document.getElementById('provider').value,
+          label: document.getElementById('label').value || undefined,
+          apiKey: document.getElementById('apiKey').value,
+        }),
+      });
+      if (!response.ok) {
+        errorEl.textContent = (await response.json()).error ?? 'Save failed';
+        return;
+      }
+      document.getElementById('apiKey').value = '';
+      refreshKeys();
+    };
+
+    document.getElementById('chat-form').onsubmit = async (event) => {
+      event.preventDefault();
+      const errorEl = document.getElementById('chat-error');
+      const answerEl = document.getElementById('answer');
+      errorEl.textContent = '';
+      answerEl.textContent = '…';
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ keyId: selectedKeyId, prompt: document.getElementById('prompt').value }),
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        answerEl.textContent = '';
+        errorEl.textContent = body.error ?? 'Chat failed';
+        return;
+      }
+      answerEl.textContent = body.text;
+    };
+
+    refreshKeys();
+  </script>
+</body>
+</html>

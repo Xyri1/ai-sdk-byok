@@ -1,0 +1,24 @@
+{
+  "name": "ai-sdk-byok-cloudflare-worker-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler d1 migrations apply DB --local && wrangler dev",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk-byok/cloudflare": "0.2.0",
+    "@ai-sdk/openai": "^4.0.11",
+    "ai": "^7.0.22",
+    "ai-sdk-byok": "0.2.0",
+    "hono": "^4.12.29"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.18.4",
+    "@cloudflare/workers-types": "^4.20260701.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.110.0"
+  }
+}

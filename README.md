@@ -135,6 +135,8 @@ The Supabase client must be created with a server-side secret key and must never
 
 For apps on Cloudflare Workers, `@ai-sdk-byok/cloudflare` provides a D1 storage adapter and a Workers KV credential cache. Credentials are always sealed with AES-256-GCM before reaching storage; the master key lives in a Worker secret. See `packages/cloudflare/README.md` for setup.
 
+A runnable example lives in [`examples/cloudflare-worker`](examples/cloudflare-worker) — key management UI plus server-side provider construction, with an end-to-end test suite running in workerd.
+
 ## Security notes
 
 - Store only single-field credentials shaped exactly as `{ apiKey: string }`.

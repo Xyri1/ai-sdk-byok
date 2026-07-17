@@ -40,6 +40,7 @@ Specs are living documents. If a change alters public behavior, security posture
 - `packages/cloudflare`: Cloudflare D1 storage adapter, Workers KV credential cache, sealed-credential crypto, tests, package README, and shipped D1 migrations.
 - `supabase/migrations`: root copy of SQL migrations for applications integrating from the repository.
 - `examples/nextjs-supabase`: example Next.js app with key management UI and server-side AI SDK provider construction.
+- `examples/cloudflare-worker`: example Hono Worker with key management UI, server-side AI SDK provider construction, and a workerd end-to-end test suite.
 - `docs`: quickstart, architecture, threat model, integration testing, release notes, and agent integration guidance.
 - `specs/001-ai-sdk-byok`: current requirements, plan, tasks, checklist, and decisions.
 - Root config files: workspace scripts, TypeScript, tsup, Vitest, ESLint, lockfile, and GitHub automation.

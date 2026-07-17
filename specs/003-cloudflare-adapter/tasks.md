@@ -9,4 +9,4 @@ Implementation plan: `docs/plans/2026-07-17-cloudflare-adapter.md`.
 - [x] `kvCredentialCache` credential cache
 - [x] End-to-end composition and security-invariant tests
 - [x] Documentation: READMEs, threat model, architecture
-- [ ] Runnable Worker example with workerd end-to-end tests
+- [x] Runnable Worker example with workerd end-to-end tests
