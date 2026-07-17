@@ -106,12 +106,10 @@ Apps that need lower per-request latency may want an external cache such as Redi
 - Pre-delete invalidation reduces use of an already cached credential during deletion.
 - Post-delete invalidation removes any stale credential repopulated by a concurrent `getById` that read from storage during the delete window.
 - Rotation should invalidate rather than eagerly cache the new plaintext credential by default.
-- When credential caching is enabled, required invalidation failure for `save`/rotation fails the public operation.
-- When credential caching is enabled, required invalidation failure for `delete` fails the public operation.
+- Cache invalidation is best-effort: invalidation failure for `save`/rotation or `delete` does not fail the public operation.
+- The underlying storage adapter alone determines whether `save`, rotation, or `delete` succeeds.
 - Cache invalidation is not transactional with the underlying storage adapter.
-- When invalidation fails after a durable save, rotation, or delete has already succeeded, fail closed means the public operation returns an error and does not report success.
-- Fail-closed invalidation does not imply rollback of the underlying storage operation.
-- Callers must treat invalidation errors after storage mutation as ambiguous completion and may retry the operation.
+- When invalidation fails after a durable save, rotation, or delete, the stale cache entry survives at most until its TTL expires.
 - Read-path cache failures fall back to the underlying storage adapter by default.
 - This spec does not add a fail-on-cache-read-error option.
 - TTL defines the maximum stale credential window when invalidation is bypassed by infrastructure failure outside the operation's control.

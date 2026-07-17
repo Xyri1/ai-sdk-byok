@@ -30,11 +30,15 @@
 - Delete cache entries before and after the underlying storage delete.
 - Use post-delete invalidation to remove stale cache entries that may be repopulated by concurrent reads during the delete window.
 - Invalidate, rather than eagerly repopulate, credential cache entries after rotation.
-- Fail closed on save/rotation and delete when required credential cache invalidation fails.
-- Define fail-closed invalidation as an error-reporting guarantee, not a rollback guarantee across storage and cache.
+- Fail closed on save/rotation and delete when required credential cache invalidation fails. (Superseded 2026-07-17 — see Revisions.)
+- Define fail-closed invalidation as an error-reporting guarantee, not a rollback guarantee across storage and cache. (Superseded 2026-07-17 — see Revisions.)
 - Fall back to the underlying storage adapter by default when read-path cache access fails.
 - Do not add a fail-on-cache-read-error option in this scope.
 - Document Redis and equivalent backends as trusted secret infrastructure when used for credential records that include plaintext credentials.
+
+## Revisions
+
+- 2026-07-17: Cache invalidation on save/rotation and delete is best-effort; the storage adapter alone decides the public operation's outcome, and TTL bounds how long a stale credential survives a failed invalidation. Fail-closed was reversed because eventually consistent cache backends (e.g. Cloudflare Workers KV) cannot make invalidation a hard revocation guarantee even when it succeeds, so failing durable writes on invalidation errors cost availability without adding safety.
 
 ## Deferred
 

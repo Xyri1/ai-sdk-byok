@@ -49,6 +49,7 @@ Using Secrets Store instead of a Worker secret? Pass a getter: `encryptionKey: (
 - Ciphertext is AAD-bound to its slot (`userId`/`provider`/`label` in D1, `userId`/`keyId` in KV) — sealed blobs copied between rows fail decryption.
 - Losing the master key means stored credentials are unrecoverable; users re-enter their API keys.
 - KV is eventually consistent: a rotated or deleted key may be served from another region until propagation (~60 s) plus remaining TTL. Keep `ttlMs` short.
+- Cache invalidation is best-effort: if KV is unavailable, `save` and `delete` still succeed against D1, and any stale cache entry expires by its TTL.
 - See `docs/threat-model.md` in the repository for the full model.
 
 ## Capacity

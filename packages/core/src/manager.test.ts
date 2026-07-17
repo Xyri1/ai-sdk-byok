@@ -333,35 +333,37 @@ describe('cachedStorage', () => {
     expect(cache.delete).toHaveBeenNthCalledWith(2, { userId: 'user_1', keyId: 'key_1' });
   });
 
-  it('fails closed when save invalidation fails after storage mutation', async () => {
+  it('save succeeds when cache invalidation fails after storage mutation', async () => {
     const storage = createStorage();
     const cache = createCache();
     vi.mocked(cache.delete).mockRejectedValueOnce(new Error('cache unavailable'));
     const wrapped = cachedStorage({ storage, cache, ttlMs: 30_000 });
 
-    await expect(
-      wrapped.save({
-        userId: 'user_1',
-        provider: 'openai',
-        label: 'default',
-        credentials: { apiKey: 'sk-test-1234' },
-        keyHint: '1234',
-      }),
-    ).rejects.toThrow('cache unavailable');
+    const metadata = await wrapped.save({
+      userId: 'user_1',
+      provider: 'openai',
+      label: 'default',
+      credentials: { apiKey: 'sk-test-1234' },
+      keyHint: '1234',
+    });
+
+    expect(metadata.id).toBe('key_1');
     expect(storage.save).toHaveBeenCalled();
+    expect(cache.delete).toHaveBeenCalledWith({ userId: 'user_1', keyId: 'key_1' });
   });
 
-  it('fails closed when delete invalidation fails before storage mutation', async () => {
+  it('delete proceeds when pre-delete invalidation fails', async () => {
     const storage = createStorage();
     const cache = createCache();
     vi.mocked(cache.delete).mockRejectedValueOnce(new Error('cache unavailable'));
     const wrapped = cachedStorage({ storage, cache, ttlMs: 30_000 });
 
-    await expect(wrapped.delete({ userId: 'user_1', keyId: 'key_1' })).rejects.toThrow('cache unavailable');
-    expect(storage.delete).not.toHaveBeenCalled();
+    await expect(wrapped.delete({ userId: 'user_1', keyId: 'key_1' })).resolves.toBeUndefined();
+    expect(storage.delete).toHaveBeenCalled();
+    expect(cache.delete).toHaveBeenCalledTimes(2);
   });
 
-  it('fails closed when delete invalidation fails after storage mutation', async () => {
+  it('delete succeeds when post-delete invalidation fails', async () => {
     const storage = createStorage();
     const cache = createCache();
     vi.mocked(cache.delete)
@@ -369,7 +371,16 @@ describe('cachedStorage', () => {
       .mockRejectedValueOnce(new Error('cache unavailable'));
     const wrapped = cachedStorage({ storage, cache, ttlMs: 30_000 });
 
-    await expect(wrapped.delete({ userId: 'user_1', keyId: 'key_1' })).rejects.toThrow('cache unavailable');
+    await expect(wrapped.delete({ userId: 'user_1', keyId: 'key_1' })).resolves.toBeUndefined();
     expect(storage.delete).toHaveBeenCalled();
+  });
+
+  it('propagates storage delete failures even with a healthy cache', async () => {
+    const storage = createStorage();
+    const cache = createCache();
+    vi.mocked(storage.delete).mockRejectedValueOnce(new Error('storage unavailable'));
+    const wrapped = cachedStorage({ storage, cache, ttlMs: 30_000 });
+
+    await expect(wrapped.delete({ userId: 'user_1', keyId: 'key_1' })).rejects.toThrow('storage unavailable');
   });
 });

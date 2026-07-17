@@ -34,10 +34,18 @@ function assertExplicitTtl(ttlMs: number): void {
 export function cachedStorage(options: CachedStorageOptions): ByokStorageAdapter {
   assertExplicitTtl(options.ttlMs);
 
+  const invalidate = async (input: GetStorageByIdInput): Promise<void> => {
+    try {
+      await options.cache.delete(input);
+    } catch {
+      // Invalidation is best-effort; the entry's TTL bounds how long a stale credential survives.
+    }
+  };
+
   return {
     save: async (input) => {
       const metadata = await options.storage.save(input);
-      await options.cache.delete({ userId: metadata.userId, keyId: metadata.id });
+      await invalidate({ userId: metadata.userId, keyId: metadata.id });
       return metadata;
     },
 
@@ -70,9 +78,9 @@ export function cachedStorage(options: CachedStorageOptions): ByokStorageAdapter
     },
 
     delete: async (input) => {
-      await options.cache.delete(input);
+      await invalidate(input);
       await options.storage.delete(input);
-      await options.cache.delete(input);
+      await invalidate(input);
     },
   };
 }
