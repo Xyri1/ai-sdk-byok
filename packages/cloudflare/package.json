@@ -1,0 +1,35 @@
+{
+  "name": "@ai-sdk-byok/cloudflare",
+  "version": "0.2.0",
+  "description": "Cloudflare D1 storage adapter and Workers KV credential cache for ai-sdk-byok.",
+  "license": "MIT",
+  "homepage": "https://github.com/Xyri1/ai-sdk-byok#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Xyri1/ai-sdk-byok.git",
+    "directory": "packages/cloudflare"
+  },
+  "bugs": {
+    "url": "https://github.com/Xyri1/ai-sdk-byok/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "migrations",
+    "README.md"
+  ],
+  "dependencies": {
+    "ai-sdk-byok": "0.2.0"
+  }
+}

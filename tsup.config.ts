@@ -23,4 +23,10 @@ export default defineConfig([
     external: ['ai-sdk-byok', '@supabase/supabase-js'],
     outDir: 'packages/supabase/dist',
   },
+  {
+    ...shared,
+    entry: ['packages/cloudflare/src/index.ts'],
+    external: ['ai-sdk-byok'],
+    outDir: 'packages/cloudflare/dist',
+  },
 ]);
