@@ -13,6 +13,7 @@ export default defineConfig(async () => {
           bindings: {
             // Test-only master key: base64 of 32 bytes of 0x07.
             BYOK_MASTER_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=',
+            OPENAI_COMPATIBLE_BASE_URL: 'https://openai-compatible.test/v1',
             TEST_MIGRATIONS: migrations,
           },
         },

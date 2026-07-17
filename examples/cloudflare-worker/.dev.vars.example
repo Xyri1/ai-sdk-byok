@@ -1,2 +1,5 @@
 # Generate with: openssl rand -base64 32
 BYOK_MASTER_KEY="replace-with-generated-key"
+
+# Only needed if you save a key under the "OpenAI-compatible" provider.
+# OPENAI_COMPATIBLE_BASE_URL="https://your-openai-compatible-host/v1"

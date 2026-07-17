@@ -8,6 +8,7 @@ export interface Env {
   DB: D1Database;
   BYOK_CACHE: KVNamespace;
   BYOK_MASTER_KEY: string;
+  OPENAI_COMPATIBLE_BASE_URL?: string;
 }
 
 // Demo identity. In a real app derive the user id from your session
