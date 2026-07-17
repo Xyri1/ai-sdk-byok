@@ -16,11 +16,12 @@ The current scope is intentionally narrow:
 - a core manager package published as `ai-sdk-byok`;
 - a Supabase Vault storage adapter published as `@ai-sdk-byok/supabase`;
 - Edge-compatible ESM package entrypoints;
-- no browser-side credential handling.
+- no browser-side credential handling;
+- a Cloudflare adapter published as `@ai-sdk-byok/cloudflare` (D1 storage adapter and Workers KV credential cache with always-encrypted sealed credentials);
 
 ## Source Of Truth
 
-This repository follows spec-driven development. Treat this file as the root project spec for agents and contributors, and treat `specs/001-ai-sdk-byok/` as the current detailed feature spec.
+This repository follows spec-driven development. Treat this file as the root project spec for agents and contributors, and treat `specs/001-ai-sdk-byok/` as the baseline feature spec, with `specs/002-key-id-redis-cache/` and `specs/003-cloudflare-adapter/` layering later accepted features.
 
 When changing behavior, read these in order:
 
@@ -36,6 +37,7 @@ Specs are living documents. If a change alters public behavior, security posture
 
 - `packages/core`: core manager, types, validation, errors, credential proxy, and tests for the `ai-sdk-byok` package.
 - `packages/supabase`: Supabase Vault storage adapter, adapter tests, package README, and shipped migrations.
+- `packages/cloudflare`: Cloudflare D1 storage adapter, Workers KV credential cache, sealed-credential crypto, tests, package README, and shipped D1 migrations.
 - `supabase/migrations`: root copy of SQL migrations for applications integrating from the repository.
 - `examples/nextjs-supabase`: example Next.js app with key management UI and server-side AI SDK provider construction.
 - `docs`: quickstart, architecture, threat model, integration testing, release notes, and agent integration guidance.
@@ -55,6 +57,8 @@ Keep duplicate migration copies in `supabase/migrations` and `packages/supabase/
 - `keys.delete(input)`: delete by `userId` and `keyId`; deletion is idempotent at the public API layer.
 
 `@ai-sdk-byok/supabase` exposes `supabaseAdapter(options)`.
+
+`@ai-sdk-byok/cloudflare` exposes `d1Adapter(options)` and `kvCredentialCache(options)`.
 
 Provider names are opaque application-defined strings. Omitted labels normalize to `default`. `keyHint` is the final up-to-four characters of the API key.
 
@@ -79,6 +83,8 @@ Validation happens in the core manager before storage adapter calls. Failures th
 - Supabase credential RPC functions must remain service-role-only.
 - Supabase `SECURITY DEFINER` functions must set `search_path = ''` and fully qualify database objects.
 - Adapter errors must not include plaintext credentials or serialized credential input.
+- Cloudflare adapter credentials must be sealed with AES-256-GCM before reaching D1 or KV; plaintext and ciphertext must never appear in metadata output or error messages.
+- The Cloudflare master encryption key must decode to exactly 32 bytes, must live only in Worker secrets or Secrets Store bindings, and must never be logged or echoed in errors.
 
 The package does not protect against compromised application servers, compromised Supabase secret keys, malicious trusted-server dependencies, or provider-side abuse after a credential is used.
 
@@ -100,8 +106,7 @@ The package does not protect against compromised application servers, compromise
 - AI SDK middleware or model wrappers.
 - React component libraries.
 - Browser-side credential storage or provider construction.
-- Non-Supabase storage adapters.
-- Application-side cryptography.
+- Application-side cryptography beyond the sealed-credential scheme owned by `@ai-sdk-byok/cloudflare`.
 
 ## Development Workflow
 
