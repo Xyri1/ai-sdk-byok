@@ -13,6 +13,7 @@
     td, th { text-align: left; padding: 0.3rem; border-bottom: 1px solid #eee; }
     #answer { white-space: pre-wrap; background: #f6f6f6; border-radius: 8px; padding: 0.75rem; min-height: 2rem; }
     .error { color: #b00020; }
+    .hint { color: #555; font-size: 0.85em; margin: 0.25rem 0 0; }
   </style>
 </head>
 <body>
@@ -23,7 +24,20 @@
     <legend>Save a key</legend>
     <form id="save-form">
       <label for="provider">Provider</label>
-      <select id="provider"><option value="openai">openai</option></select>
+      <select id="provider">
+        <option value="openai">OpenAI</option>
+        <option value="anthropic">Anthropic</option>
+        <option value="deepseek">DeepSeek</option>
+        <option value="xai">xAI</option>
+        <option value="groq">Groq</option>
+        <option value="mistral">Mistral</option>
+        <option value="cohere">Cohere</option>
+        <option value="openrouter">OpenRouter</option>
+        <option value="openai-compatible">OpenAI-compatible</option>
+      </select>
+      <p id="openai-compatible-hint" class="hint" style="display: none">
+        Requires <code>OPENAI_COMPATIBLE_BASE_URL</code> to be set in <code>.dev.vars</code>.
+      </p>
       <label for="label">Label (optional)</label>
       <input id="label" placeholder="default" />
       <label for="apiKey">API key</label>
@@ -43,6 +57,11 @@
   <fieldset>
     <legend>Chat with the selected key</legend>
     <form id="chat-form">
+      <label for="model">Model</label>
+      <select id="model" disabled>
+        <option value="">Choose a saved key first</option>
+      </select>
+      <label for="prompt">Prompt</label>
       <textarea id="prompt" rows="3" style="width: 100%" placeholder="Say hello"></textarea>
       <p><button type="submit">Send</button> <span id="chat-error" class="error"></span></p>
     </form>
@@ -51,7 +70,47 @@
 
   <script>
     const keyRows = document.getElementById('key-rows');
+    const providerSelect = document.getElementById('provider');
+    const openaiCompatibleHint = document.getElementById('openai-compatible-hint');
+    const modelSelect = document.getElementById('model');
     let selectedKeyId = null;
+
+    providerSelect.onchange = () => {
+      openaiCompatibleHint.style.display = providerSelect.value === 'openai-compatible' ? 'block' : 'none';
+    };
+
+    async function refreshModels(keyId) {
+      if (!keyId) {
+        modelSelect.innerHTML = '<option value="">Choose a saved key first</option>';
+        modelSelect.disabled = true;
+        return;
+      }
+
+      modelSelect.disabled = true;
+      modelSelect.innerHTML = '<option value="">Loading models…</option>';
+
+      try {
+        const response = await fetch(`/api/models?keyId=${encodeURIComponent(keyId)}`);
+        if (!response.ok) throw new Error('models request failed');
+        const { models } = await response.json();
+
+        if (models.length === 0) {
+          modelSelect.innerHTML = '<option value="">No models available</option>';
+          return;
+        }
+
+        modelSelect.innerHTML = '';
+        for (const model of models) {
+          const option = document.createElement('option');
+          option.value = model.id;
+          option.textContent = model.name;
+          modelSelect.append(option);
+        }
+        modelSelect.disabled = false;
+      } catch {
+        modelSelect.innerHTML = '<option value="">Models unavailable</option>';
+      }
+    }
 
     async function refreshKeys() {
       const keys = await (await fetch('/api/keys')).json();
@@ -64,13 +123,17 @@
           <td>${key.provider}</td><td>${key.label}</td><td>…${key.keyHint}</td>
           <td>${new Date(key.updatedAt).toLocaleString()}</td>
           <td><button type="button">Delete</button></td>`;
-        row.querySelector('input').onchange = () => { selectedKeyId = key.id; };
+        row.querySelector('input').onchange = () => {
+          selectedKeyId = key.id;
+          refreshModels(selectedKeyId);
+        };
         row.querySelector('button').onclick = async () => {
           await fetch(`/api/keys/${key.id}`, { method: 'DELETE' });
           refreshKeys();
         };
         keyRows.append(row);
       }
+      refreshModels(selectedKeyId);
     }
 
     document.getElementById('save-form').onsubmit = async (event) => {
@@ -81,7 +144,7 @@
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          provider: document.getElementById('provider').value,
+          provider: providerSelect.value,
           label: document.getElementById('label').value || undefined,
           apiKey: document.getElementById('apiKey').value,
         }),
@@ -99,19 +162,37 @@
       const errorEl = document.getElementById('chat-error');
       const answerEl = document.getElementById('answer');
       errorEl.textContent = '';
-      answerEl.textContent = '…';
+      answerEl.textContent = '';
+
+      const modelId = modelSelect.value;
+      if (!modelId) {
+        errorEl.textContent = 'Choose a model';
+        return;
+      }
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ keyId: selectedKeyId, prompt: document.getElementById('prompt').value }),
+        body: JSON.stringify({
+          keyId: selectedKeyId,
+          model: modelId,
+          prompt: document.getElementById('prompt').value,
+        }),
       });
-      const body = await response.json();
-      if (!response.ok) {
-        answerEl.textContent = '';
+
+      if (!response.ok || !response.body) {
+        const body = await response.json().catch(() => ({}));
         errorEl.textContent = body.error ?? 'Chat failed';
         return;
       }
-      answerEl.textContent = body.text;
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        answerEl.textContent += decoder.decode(value, { stream: true });
+      }
     };
 
     refreshKeys();
