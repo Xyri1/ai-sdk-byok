@@ -16,6 +16,16 @@ function assertRecord(value: unknown, name: string): asserts value is Record<Pro
   }
 }
 
+function containsControlCharacters(value: string): boolean {
+  for (const character of value) {
+    const codePoint = character.codePointAt(0) ?? 0;
+    if (codePoint < 0x20 || codePoint === 0x7f) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function assertString(value: unknown, name: string, maxLength: number): asserts value is string {
   if (typeof value !== 'string') {
     throw new AiSdkByokValidationError(`${name} must be a string`);
@@ -27,6 +37,10 @@ function assertString(value: unknown, name: string, maxLength: number): asserts 
 
   if (value.length > maxLength) {
     throw new AiSdkByokValidationError(`${name} must be at most ${maxLength} characters`);
+  }
+
+  if (containsControlCharacters(value)) {
+    throw new AiSdkByokValidationError(`${name} must not contain control characters`);
   }
 }
 

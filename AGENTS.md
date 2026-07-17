@@ -72,6 +72,7 @@ Validation happens in the core manager before storage adapter calls. Failures th
 - `label`: non-empty string, max 128 characters after default normalization.
 - `credentials`: exactly `{ apiKey: string }`, no extra fields.
 - `apiKey`: non-empty string, max 8192 characters.
+- All validated string fields reject ASCII control characters (U+0000–U+001F, U+007F).
 
 ## Security Invariants
 

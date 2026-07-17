@@ -104,6 +104,12 @@ describe('createByokManager', () => {
       { userId: 'user_1', provider: 'p'.repeat(129), credentials: { apiKey: 'sk-test' } },
       { userId: 'user_1', provider: 'openai', label: 'l'.repeat(129), credentials: { apiKey: 'sk-test' } },
       { userId: 'user_1', provider: 'openai', credentials: { apiKey: 'k'.repeat(8193) } },
+      { userId: 'user\u00001', provider: 'openai', credentials: { apiKey: 'sk-test' } },
+      { userId: 'user_1', provider: 'open\u0000ai', credentials: { apiKey: 'sk-test' } },
+      { userId: 'user_1', provider: 'openai', label: 'a\u0000b', credentials: { apiKey: 'sk-test' } },
+      { userId: 'user_1', provider: 'open\u0007ai', credentials: { apiKey: 'sk-test' } },
+      { userId: 'user_1', provider: 'open\u007fai', credentials: { apiKey: 'sk-test' } },
+      { userId: 'user_1', provider: 'openai', credentials: { apiKey: 'sk-\u0000test' } },
     ];
 
     for (const input of invalidInputs) {
@@ -132,6 +138,12 @@ describe('createByokManager', () => {
       AiSdkByokValidationError,
     );
     await expect(byok.keys.getById({ userId: 'user_1', keyId: 'k'.repeat(129) })).rejects.toBeInstanceOf(
+      AiSdkByokValidationError,
+    );
+    await expect(byok.keys.getById({ userId: 'user_1', keyId: 'key\u00001' })).rejects.toBeInstanceOf(
+      AiSdkByokValidationError,
+    );
+    await expect(byok.keys.delete({ userId: 'user\u00001', keyId: 'key_1' })).rejects.toBeInstanceOf(
       AiSdkByokValidationError,
     );
     await expect(byok.keys.delete({ userId: 'user_1', keyId: '' })).rejects.toBeInstanceOf(

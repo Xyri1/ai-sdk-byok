@@ -15,3 +15,7 @@ This file mirrors the v0.1 decision log from `ai_sdk_byok_design.md` and records
 - Keep direct client access out of scope for v0.1.
 - Use `SECURITY DEFINER` functions with `search_path = ''` for credential RPC.
 - Preserve Edge-compatible package entrypoints.
+
+## Accepted After v0.1
+
+- Reject ASCII control characters (U+0000–U+001F, U+007F) in all validated string fields so NUL-delimited AAD encodings in encrypting adapters stay unambiguous. (2026-07-17)

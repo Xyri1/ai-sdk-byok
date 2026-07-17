@@ -24,6 +24,7 @@ Draft, derived from `ai_sdk_byok_design.md`.
 - `label` is a non-empty string up to 128 characters after omission normalization.
 - `credentials` is exactly `{ apiKey: string }` with no extra fields.
 - `apiKey` is non-empty and no longer than 8192 characters.
+- Validated string fields (`userId`, `provider`, `label`, `keyId`, `apiKey`) must not contain ASCII control characters (U+0000–U+001F, U+007F).
 - Validation failures throw `AiSdkByokValidationError` before storage adapter calls.
 
 ## Security Requirements
