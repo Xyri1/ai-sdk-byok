@@ -108,6 +108,10 @@ const storage = supabaseAdapter({ client: supabaseAdmin });
 
 Supabase 客户端必须使用服务端 secret key 创建，严禁暴露给任何浏览器端代码。
 
+### Cloudflare（D1 + KV）
+
+对于部署在 Cloudflare Workers 上的应用，`@ai-sdk-byok/cloudflare` 提供 D1 存储适配器和 Workers KV 凭证缓存。凭证在写入存储前始终使用 AES-256-GCM 加密封装；主密钥保存在 Worker secret 中。安装与配置请参阅 `packages/cloudflare/README.md`。
+
 ## 安全说明
 
 - 只存储严格符合 `{ apiKey: string }` 结构的单字段凭据。

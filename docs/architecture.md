@@ -23,6 +23,10 @@ The Supabase adapter uses a server-side Supabase client initialized with a secre
 
 Supabase is the first concrete durable adapter for key-id retrieval. The optional cache layer is adapter-agnostic and does not depend on Supabase RPC names, Vault secret ids, tables, or migrations.
 
+## Cloudflare Adapter
+
+`@ai-sdk-byok/cloudflare` targets apps running on Cloudflare Workers. `d1Adapter` implements the core storage contract on a D1 binding; `kvCredentialCache` implements the credential-record cache contract on a KV binding. Both seal credentials with AES-256-GCM (WebCrypto) before writing; the 32-byte master key arrives via a Worker secret string or an async getter (Secrets Store). The sealed format is versioned (`v1.`) so key rotation can be introduced without data migration. `save` is a single-statement upsert with `RETURNING`; `list` never projects the ciphertext column. The KV cache hashes `userId`/`keyId` into fixed-length keys and layers a logical `expiresAt` (sealed, authoritative) over KV's physical `expirationTtl` (floored at 60 s).
+
 ## Optional Credential Cache
 
 `cachedStorage` wraps a storage adapter below the core manager. It caches internal serializable credential records for `getById`, then the manager proxy-wraps credentials before returning public records.
