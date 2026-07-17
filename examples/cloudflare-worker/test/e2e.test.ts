@@ -205,4 +205,42 @@ describe('cloudflare worker example end to end', () => {
     expect(list.some((key) => key.id === id)).toBe(false);
     expect((await call('/api/chat', json({ keyId: id, model: 'gpt-5-mini', prompt: 'hi' }))).status).toBe(404);
   });
+
+  it('lists normalized models for the selected key provider', async () => {
+    const { id } = await saveKey('sk-mock-1234');
+
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = new URL(input as string);
+
+      if (url.origin === 'https://api.openai.com' && url.pathname === '/v1/models') {
+        return new Response(
+          JSON.stringify({
+            object: 'list',
+            data: [
+              { id: 'gpt-5-mini', object: 'model' },
+              { id: 'gpt-5', object: 'model' },
+            ],
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    const response = await call(`/api/models?keyId=${id}`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      models: [
+        { id: 'gpt-5', name: 'gpt-5' },
+        { id: 'gpt-5-mini', name: 'gpt-5-mini' },
+      ],
+    });
+  });
+
+  it('returns 400 from models listing when keyId is missing', async () => {
+    const response = await call('/api/models');
+    expect(response.status).toBe(400);
+  });
 });
