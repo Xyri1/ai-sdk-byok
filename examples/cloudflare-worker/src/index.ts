@@ -33,7 +33,12 @@ app.get('/api/keys', async (c) => {
 });
 
 app.post('/api/keys', async (c) => {
-  const body = await c.req.json<{ provider?: string; label?: string; apiKey?: string }>();
+  let body: { provider?: string; label?: string; apiKey?: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: 'request body must be valid JSON' }, 400);
+  }
 
   try {
     const metadata = await createManager(c.env).keys.save({

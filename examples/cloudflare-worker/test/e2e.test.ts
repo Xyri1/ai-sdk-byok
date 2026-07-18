@@ -81,6 +81,16 @@ describe('cloudflare worker example end to end', () => {
     expect(response.status).toBe(400);
   });
 
+  it('rejects a non-JSON body with a 400', async () => {
+    const response = await call('/api/keys', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: 'not json',
+    });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'request body must be valid JSON' });
+  });
+
   it('lists metadata only', async () => {
     await saveKey('sk-mock-1234');
 
