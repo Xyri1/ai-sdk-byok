@@ -5,10 +5,13 @@ Runnable end-to-end example of `@ai-sdk-byok/cloudflare`: a Hono Worker with a k
 ## Run locally (no Cloudflare account needed)
 
 ```sh
+cd examples/cloudflare-worker
 cp .dev.vars.example .dev.vars           # then set BYOK_MASTER_KEY=$(openssl rand -base64 32)
 npm install
-npm run dev -w examples/cloudflare-worker
+npm run dev
 ```
+
+This example is intentionally **not** part of the repo's npm workspace: it installs `ai-sdk-byok` and `@ai-sdk-byok/cloudflare` from the npm registry, exactly as your own app would.
 
 `wrangler dev` applies the D1 migration locally and serves the UI. Save a key, watch the list stay metadata-only, pick a live model from the dropdown, and chat using your own provider key.
 
@@ -16,7 +19,7 @@ If you select the "OpenAI-compatible" provider, also set `OPENAI_COMPATIBLE_BASE
 
 ## Tests
 
-`npm run test -w examples/cloudflare-worker` runs the end-to-end suite inside real workerd (`@cloudflare/vitest-pool-workers`): local D1/KV bindings, migrations applied in setup, and outbound provider calls intercepted to prove the saved key reaches the right provider for OpenAI, Anthropic, OpenRouter, and a mocked OpenAI-compatible endpoint.
+`npm test` (from this directory) runs the end-to-end suite inside real workerd (`@cloudflare/vitest-pool-workers`): local D1/KV bindings, migrations applied in setup, and outbound provider calls intercepted to prove the saved key reaches the right provider for OpenAI, Anthropic, OpenRouter, and a mocked OpenAI-compatible endpoint.
 
 ## What to copy into a real app
 
