@@ -148,4 +148,4 @@ npm install
 npm run check
 ```
 
-本项目遵循规格驱动开发（SDD）流程。从[需求文档](specs/001-ai-sdk-byok/requirements.md)开始，然后按[任务清单](specs/001-ai-sdk-byok/tasks.md)推进。
+本项目遵循规格驱动开发（SDD）流程。从[需求文档](docs/specs/001-ai-sdk-byok/requirements.md)开始，然后按[任务清单](docs/specs/001-ai-sdk-byok/tasks.md)推进。

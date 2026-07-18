@@ -172,4 +172,4 @@ npm install
 npm run check
 ```
 
-The project follows spec-driven development. Start with [requirements](specs/001-ai-sdk-byok/requirements.md), then work through the [task checklist](specs/001-ai-sdk-byok/tasks.md).
+The project follows spec-driven development. Start with [requirements](docs/specs/001-ai-sdk-byok/requirements.md), then work through the [task checklist](docs/specs/001-ai-sdk-byok/tasks.md).

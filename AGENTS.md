@@ -21,14 +21,14 @@ The current scope is intentionally narrow:
 
 ## Source Of Truth
 
-This repository follows spec-driven development. Treat this file as the root project spec for agents and contributors, and treat `specs/001-ai-sdk-byok/` as the baseline feature spec, with `specs/002-key-id-redis-cache/` and `specs/003-cloudflare-adapter/` layering later accepted features.
+This repository follows spec-driven development. Treat this file as the root project spec for agents and contributors, and treat `docs/specs/001-ai-sdk-byok/` as the baseline feature spec, with `docs/specs/002-key-id-redis-cache/` and `docs/specs/004-cloudflare-adapter/` layering later accepted features.
 
 When changing behavior, read these in order:
 
 1. `AGENTS.md` for project-level invariants and workflow.
-2. `specs/001-ai-sdk-byok/requirements.md` for functional, validation, security, and runtime requirements.
-3. `specs/001-ai-sdk-byok/decisions.md` for accepted product and architecture decisions.
-4. `specs/001-ai-sdk-byok/tasks.md` for delivery status.
+2. `docs/specs/001-ai-sdk-byok/requirements.md` for functional, validation, security, and runtime requirements.
+3. `docs/specs/001-ai-sdk-byok/decisions.md` for accepted product and architecture decisions.
+4. `docs/specs/001-ai-sdk-byok/tasks.md` for delivery status.
 5. `docs/architecture.md`, `docs/threat-model.md`, and `docs/agent-implementation.md` for operational guidance.
 
 Specs are living documents. If a change alters public behavior, security posture, runtime support, or integration guidance, update the matching spec or doc in the same change. Do not maintain decisions in chat history or commit messages; the spec is the artifact.
@@ -42,7 +42,7 @@ Specs are living documents. If a change alters public behavior, security posture
 - `examples/nextjs-supabase`: example Next.js app with key management UI and server-side AI SDK provider construction.
 - `examples/cloudflare-worker`: example Hono Worker with key management UI, server-side AI SDK provider construction, and a workerd end-to-end test suite.
 - `docs`: quickstart, architecture, threat model, integration testing, release notes, and agent integration guidance.
-- `specs/001-ai-sdk-byok`: current requirements, plan, tasks, checklist, and decisions.
+- `docs/specs/001-ai-sdk-byok`: current requirements, plan, tasks, checklist, and decisions.
 - Root config files: workspace scripts, TypeScript, tsup, Vitest, ESLint, lockfile, and GitHub automation.
 - Generated artifacts: `dist` and `node_modules`; do not edit these by hand.
 
@@ -114,9 +114,9 @@ The package does not protect against compromised application servers, compromise
 
 Follow the SDD flow:
 
-1. Confirm expected behavior in `specs/001-ai-sdk-byok/requirements.md`.
-2. Record or update decisions in `specs/001-ai-sdk-byok/decisions.md` when behavior or operational guidance changes.
-3. Break implementation into task checklist updates in `specs/001-ai-sdk-byok/tasks.md` when scope changes.
+1. Confirm expected behavior in `docs/specs/001-ai-sdk-byok/requirements.md`.
+2. Record or update decisions in `docs/specs/001-ai-sdk-byok/decisions.md` when behavior or operational guidance changes.
+3. Break implementation into task checklist updates in `docs/specs/001-ai-sdk-byok/tasks.md` when scope changes.
 4. Implement the smallest coherent slice.
 5. Add or update tests before marking tasks complete.
 6. Run verification commands.
