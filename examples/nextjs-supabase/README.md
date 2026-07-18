@@ -30,14 +30,16 @@ Apply the migrations from the package root to your Supabase project in filename 
 2. Paste the contents of each SQL file in [`supabase/migrations`](../../supabase/migrations) from the repository root, in order.
 3. Run each migration.
 
-Alternatively, use the Supabase CLI:
+Alternatively, apply them with `psql` using your project's connection string:
 
 ```sh
-supabase db push --file ../../supabase/migrations/202605190001_ai_sdk_byok_init.sql
-supabase db push --file ../../supabase/migrations/202605190003_ai_sdk_byok_get_credentials_by_id.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
+  -f ../../supabase/migrations/001_ai_sdk_byok_init.sql \
+  -f ../../supabase/migrations/002_ai_sdk_byok_save_returns_metadata.sql \
+  -f ../../supabase/migrations/003_ai_sdk_byok_get_credentials_by_id.sql
 ```
 
-Or link the project and push:
+Or link the project and push (run from the repository root so the CLI finds `supabase/migrations`):
 
 ```sh
 supabase link --project-ref <your-project-ref>
