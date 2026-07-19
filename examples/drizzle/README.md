@@ -16,27 +16,21 @@ page, and a `DATABASE_URL`.
 
 ## Setup
 
-This example is an npm workspace member, so the `ai-sdk-byok` and `@ai-sdk-byok/drizzle`
-packages are linked from source. From the **repo root**:
-
-```sh
-npm install
-npm run build          # builds the workspace packages the example imports at runtime
-```
-
-Then configure and run the example:
+This example is intentionally **not** part of the repo's npm workspace: it installs
+`ai-sdk-byok` and `@ai-sdk-byok/drizzle` from the npm registry, exactly as your own
+app would.
 
 ```sh
 cd examples/drizzle
+npm install
 cp .env.example .env   # set DATABASE_URL; generate the master key:
                        #   openssl rand -base64 32  -> AI_SDK_BYOK_MASTER_KEY
 npm run migrate
 npm run dev            # http://localhost:3000
 ```
 
-In a real app outside this repo, install from the registry instead —
-`npm install ai-sdk-byok @ai-sdk-byok/drizzle` — and everything else here works the
-same, including the migration script (it resolves the shipped SQL through the package).
+The migration script resolves the shipped SQL through the installed package, so it
+works the same in your own app after `npm install ai-sdk-byok @ai-sdk-byok/drizzle`.
 
 ## Migrations
 

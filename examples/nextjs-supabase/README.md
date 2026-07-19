@@ -73,22 +73,14 @@ Server logs are structured with the `[byok-example]` prefix and are written only
 
 ### 3. Install dependencies
 
-From the repository root:
+This example is intentionally **not** part of the repo's npm workspace: it installs `ai-sdk-byok` and `@ai-sdk-byok/supabase` from the npm registry, exactly as your own app would.
 
 ```sh
+# from examples/nextjs-supabase
 npm install
 ```
 
-### 4. Build the package
-
-The example is part of the root npm workspace and depends on the local `ai-sdk-byok` and `@ai-sdk-byok/supabase` workspace packages. Make sure the packages are built before running the dev server:
-
-```sh
-# from the repository root
-npm run build
-```
-
-### 5. Start the dev server
+### 4. Start the dev server
 
 ```sh
 # from examples/nextjs-supabase
@@ -127,4 +119,4 @@ Click **Delete** next to any saved key in the list. The row is removed and the a
 - The OpenAI-compatible provider requires `OPENAI_COMPATIBLE_BASE_URL` to be set for both model listing and chat.
 - Credential caching uses `ai-sdk-byok`'s generic `cachedStorage` wrapper around the Supabase adapter. It caches only key-id credential retrieval, not metadata/list responses.
 - Cache keys are derived from trusted server-side `userId` plus `keyId` and hashed before sending to Redis. Save/rotation and delete invalidate cached credentials; TTL bounds stale-cache windows when infrastructure fails outside those operations.
-- The dev server runs with `--webpack` because the example targets Next.js 16 and uses local workspace package dependencies.
+- The dev server runs with `--webpack` because the example targets Next.js 16.

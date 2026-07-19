@@ -6,9 +6,7 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*",
-    "examples/nextjs-supabase",
-    "examples/drizzle"
+    "packages/*"
   ],
   "scripts": {
     "build": "tsup",
