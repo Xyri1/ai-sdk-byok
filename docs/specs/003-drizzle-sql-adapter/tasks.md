@@ -80,3 +80,4 @@
 - [x] `npm run test`
 - [x] `npm run build`
 - [x] `npm run check`
+- [x] `examples/drizzle` runnable example (key UI, streaming chat, in-app openai-compatible base URLs) — see `examples/drizzle/README.md`.

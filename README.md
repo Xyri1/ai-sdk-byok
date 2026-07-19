@@ -194,6 +194,7 @@ A runnable example lives in [`examples/cloudflare-worker`](examples/cloudflare-w
 ## Examples
 
 - [Next.js + Supabase](examples/nextjs-supabase/README.md) — key management UI and AI SDK chat route using the Supabase adapter.
+- [Drizzle + Postgres](examples/drizzle/README.md) — Node + Hono key management UI and streaming chat using the Drizzle adapter with any Postgres.
 
 ## Development
 
