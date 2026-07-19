@@ -24,26 +24,19 @@ OpenAI, Anthropic, DeepSeek, xAI, Groq, Mistral, Cohere, OpenRouter, and any Ope
 
 ### 1. Apply the migrations
 
-Apply the migrations from the package root to your Supabase project in filename order. The easiest way is through the Supabase dashboard SQL editor:
+Apply the migrations from the adapter package to your Supabase project in filename order. The easiest way is through the Supabase dashboard SQL editor:
 
 1. Open your Supabase project → SQL editor.
-2. Paste the contents of each SQL file in [`supabase/migrations`](../../supabase/migrations) from the repository root, in order.
+2. Paste the contents of each SQL file in [`packages/supabase/migrations`](../../packages/supabase/migrations), in order.
 3. Run each migration.
 
 Alternatively, apply them with `psql` using your project's connection string:
 
 ```sh
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
-  -f ../../supabase/migrations/001_ai_sdk_byok_init.sql \
-  -f ../../supabase/migrations/002_ai_sdk_byok_save_returns_metadata.sql \
-  -f ../../supabase/migrations/003_ai_sdk_byok_get_credentials_by_id.sql
-```
-
-Or link the project and push (run from the repository root so the CLI finds `supabase/migrations`):
-
-```sh
-supabase link --project-ref <your-project-ref>
-supabase db push
+  -f ../../packages/supabase/migrations/202605190001_ai_sdk_byok_init.sql \
+  -f ../../packages/supabase/migrations/202605190002_ai_sdk_byok_save_returns_metadata.sql \
+  -f ../../packages/supabase/migrations/202605190003_ai_sdk_byok_get_credentials_by_id.sql
 ```
 
 ### 2. Configure environment variables

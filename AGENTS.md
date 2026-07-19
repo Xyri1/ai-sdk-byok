@@ -40,7 +40,6 @@ Specs are living documents. If a change alters public behavior, security posture
 - `packages/supabase`: Supabase Vault storage adapter, adapter tests, package README, and shipped migrations.
 - `packages/cloudflare`: Cloudflare D1 storage adapter, Workers KV credential cache, sealed-credential crypto, tests, package README, and shipped D1 migrations.
 - `packages/drizzle`: Drizzle PostgreSQL storage adapter, application-side encryption, adapter tests, package README, and shipped SQL migration.
-- `supabase/migrations`: root copy of SQL migrations for applications integrating from the repository.
 - `examples/nextjs-supabase`: example Next.js app with key management UI and server-side AI SDK provider construction.
 - `examples/cloudflare-worker`: example Hono Worker with key management UI, server-side AI SDK provider construction, and a workerd end-to-end test suite.
 - `docs`: quickstart, architecture, threat model, integration testing, release notes, and agent integration guidance.
@@ -49,7 +48,7 @@ Specs are living documents. If a change alters public behavior, security posture
 - Root config files: workspace scripts, TypeScript, tsup, Vitest, ESLint, lockfile, and GitHub automation.
 - Generated artifacts: `dist` and `node_modules`; do not edit these by hand.
 
-Keep duplicate migration copies in `supabase/migrations` and `packages/supabase/migrations` in sync unless a future decision removes one of them.
+`packages/supabase/migrations` is the single canonical home for the Supabase SQL migrations. Adapter-specific files live under their package; do not reintroduce a root-level copy.
 
 ## Public API Requirements
 

@@ -49,7 +49,7 @@ When stopping, explain which condition failed and what would need to change befo
    npm install ai-sdk-byok @ai-sdk-byok/drizzle drizzle-orm
    ```
 
-3. Apply the selected migration: all SQL files from `supabase/migrations` for Supabase, or `packages/drizzle/migrations/0001_ai_sdk_byok_init.sql` for Drizzle PostgreSQL. Drizzle Kit users may generate the equivalent migration from the exported schema.
+3. Apply the selected migration: all SQL files from `packages/supabase/migrations` for Supabase, or `packages/drizzle/migrations/0001_ai_sdk_byok_init.sql` for Drizzle PostgreSQL. Drizzle Kit users may generate the equivalent migration from the exported schema.
 4. Add server-only secrets. Supabase uses the project URL and secret key; Drizzle uses a 32-byte base64 master key. Never expose either adapter's secret material to the browser.
 5. Create a server-only BYOK manager. For Supabase:
 

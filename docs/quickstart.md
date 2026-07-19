@@ -2,7 +2,7 @@
 
 ## 1. Apply the Supabase Migration
 
-Apply the SQL files in `supabase/migrations` in order to a Supabase project with Vault enabled.
+Apply the SQL files in `packages/supabase/migrations` in order to a Supabase project with Vault enabled.
 
 ## 2. Create a Server-Side Manager
 

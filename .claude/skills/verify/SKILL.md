@@ -1,6 +1,6 @@
 ---
 name: verify
-description: How to verify supabase/migrations changes in this repo against a real database
+description: How to verify packages/supabase/migrations changes in this repo against a real database
 ---
 
 # Verifying migrations
@@ -20,11 +20,11 @@ for i in $(seq 1 60); do
     "SELECT 1 FROM pg_extension WHERE extname='supabase_vault'" 2>/dev/null | grep -q 1 && break
   sleep 2
 done
-docker cp supabase/migrations/. byok-verify:/migrations
+docker cp packages/supabase/migrations/. byok-verify:/migrations
 docker exec byok-verify psql -U postgres -v ON_ERROR_STOP=1 \
-  -f /migrations/001_ai_sdk_byok_init.sql \
-  -f /migrations/002_ai_sdk_byok_save_returns_metadata.sql \
-  -f /migrations/003_ai_sdk_byok_get_credentials_by_id.sql
+  -f /migrations/202605190001_ai_sdk_byok_init.sql \
+  -f /migrations/202605190002_ai_sdk_byok_save_returns_metadata.sql \
+  -f /migrations/202605190003_ai_sdk_byok_get_credentials_by_id.sql
 ```
 
 The image bundles `supabase_vault`, required by these migrations. Note
@@ -32,8 +32,17 @@ The image bundles `supabase_vault`, required by these migrations. Note
 
 ## CLI surface (supabase db push)
 
+The repo no longer tracks a root `supabase/migrations` dir, so stage one
+first — the CLI only reads migrations from `<workdir>/supabase/migrations`:
+
+```bash
+mkdir -p /tmp/byok-wd/supabase/migrations
+cp packages/supabase/migrations/*.sql /tmp/byok-wd/supabase/migrations/
+cd /tmp/byok-wd
+```
+
 `supabase db push` has NO `--file` flag (checked v2.109.1) and refuses
-non-TLS `--db-url`. To test the tracked flow:
+non-TLS `--db-url`. To test the push flow:
 
 1. Run the container with `-p 55432:5432`.
 2. Enable SSL inside it (the `postgres` role is not superuser — use

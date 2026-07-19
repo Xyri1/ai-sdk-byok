@@ -43,7 +43,7 @@ npm install ai-sdk-byok @ai-sdk-byok/drizzle drizzle-orm
 
 ## Quickstart
 
-Apply the SQL migrations in [`supabase/migrations`](supabase/migrations) in order to a Supabase project with Vault enabled, then create a manager in trusted server-side code:
+Apply the SQL migrations in [`packages/supabase/migrations`](packages/supabase/migrations) in order to a Supabase project with Vault enabled, then create a manager in trusted server-side code:
 
 ```ts
 import { createByokManager } from 'ai-sdk-byok';

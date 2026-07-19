@@ -42,7 +42,7 @@ npm install ai-sdk-byok @ai-sdk-byok/drizzle drizzle-orm
 
 ## 快速上手
 
-将 [`supabase/migrations`](supabase/migrations/001_ai_sdk_byok_init.sql) 中的迁移文件应用到已启用 Vault 的 Supabase 项目，然后在受信任的服务端代码中创建 manager：
+将 [`packages/supabase/migrations`](packages/supabase/migrations) 中的迁移文件应用到已启用 Vault 的 Supabase 项目，然后在受信任的服务端代码中创建 manager：
 
 ```ts
 import { createByokManager } from 'ai-sdk-byok';
