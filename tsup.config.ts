@@ -29,4 +29,10 @@ export default defineConfig([
     external: ['ai-sdk-byok'],
     outDir: 'packages/cloudflare/dist',
   },
+  {
+    ...shared,
+    entry: ['packages/drizzle/src/index.ts'],
+    external: ['ai-sdk-byok', 'drizzle-orm'],
+    outDir: 'packages/drizzle/dist',
+  },
 ]);

@@ -6,7 +6,7 @@ Bring-your-own-key credential storage helpers for AI SDK applications.
 
 `ai-sdk-byok` helps applications accept user-owned provider API keys without building credential lifecycle plumbing from scratch. It stores per-user API-key credentials, retrieves them only when server-side provider construction needs them, and keeps list responses free of plaintext secrets.
 
-The v0.1 scope is intentionally small: single-field `{ apiKey }` credentials, an adapter for Supabase Vault, and Edge-compatible ESM entrypoints.
+The v0.2 scope remains focused: single-field `{ apiKey }` credentials, Supabase Vault, Cloudflare, and Drizzle SQL adapters, with ESM entrypoints.
 
 ## Features
 
@@ -15,16 +15,31 @@ The v0.1 scope is intentionally small: single-field `{ apiKey }` credentials, an
 - Credential objects that block `JSON.stringify` and object-level string coercion.
 - Opaque provider names so applications can define their own provider IDs.
 - Supabase Vault storage adapter with service-role-only RPC functions.
+- Drizzle PostgreSQL storage adapter with application-side AES-256-GCM encryption.
 - Optional adapter-agnostic `cachedStorage` wrapper for app-owned credential caches.
-- Edge-compatible packages for `ai-sdk-byok` and `@ai-sdk-byok/supabase`.
+- ESM packages for `ai-sdk-byok`, `@ai-sdk-byok/supabase`, `@ai-sdk-byok/cloudflare`, and `@ai-sdk-byok/drizzle`.
+
+## Packages
+
+| Package | Purpose |
+| --- | --- |
+| `ai-sdk-byok` | Core manager, validation, metadata, and credential safety. |
+| `@ai-sdk-byok/supabase` | Supabase Vault storage adapter. |
+| `@ai-sdk-byok/cloudflare` | Cloudflare D1 storage adapter and Workers KV credential cache. |
+| `@ai-sdk-byok/drizzle` | Drizzle PostgreSQL storage adapter with application-side encryption. |
 
 ## Install
 
 ```sh
+# Supabase
 npm install ai-sdk-byok @ai-sdk-byok/supabase @supabase/supabase-js
+
+# Drizzle + PostgreSQL
+npm install ai-sdk-byok @ai-sdk-byok/drizzle drizzle-orm
 ```
 
 `@supabase/supabase-js` is an optional peer dependency. Install it when using the Supabase adapter.
+`drizzle-orm` is a peer dependency of `@ai-sdk-byok/drizzle`. Install it when using the Drizzle adapter.
 
 ## Quickstart
 
@@ -131,6 +146,20 @@ const storage = supabaseAdapter({ client: supabaseAdmin });
 
 The Supabase client must be created with a server-side secret key and must never be exposed to browser code.
 
+### `drizzleAdapter(options)`
+
+Creates a PostgreSQL storage adapter that encrypts credentials in trusted application code before writing to SQL. See [`packages/drizzle/README.md`](packages/drizzle/README.md) for migration setup, key rotation, and the security model.
+
+```ts
+const storage = drizzleAdapter({
+  db,
+  dialect: 'postgres',
+  encryption: {
+    current: { version: 'v1', key: process.env.AI_SDK_BYOK_MASTER_KEY! },
+  },
+});
+```
+
 ### Cloudflare (D1 + KV)
 
 For apps on Cloudflare Workers, `@ai-sdk-byok/cloudflare` provides a D1 storage adapter and a Workers KV credential cache. Credentials are always sealed with AES-256-GCM before reaching storage; the master key lives in a Worker secret. See `packages/cloudflare/README.md` for setup.
@@ -144,13 +173,14 @@ A runnable example lives in [`examples/cloudflare-worker`](examples/cloudflare-w
 - Use `keys.getById` or `keys.get` as late as possible and let returned credentials fall out of scope after provider construction.
 - Metadata includes a short `keyHint`, but never exposes the underlying Vault secret ID.
 - Supabase credential RPC functions are intended for service-role access only.
+- The Drizzle master key is never stored in SQL; losing it makes stored credentials unrecoverable.
 - Treat Redis or any other plaintext credential cache as trusted secret infrastructure with a TTL-bounded stale-credential window.
 
 ## Runtime support
 
 - Node.js 22 or newer.
 - ESM imports only.
-- Core and Supabase package entrypoints are designed to remain Edge-compatible.
+- Core and adapter package entrypoints are ESM; the Drizzle adapter requires Node.js 22+ and a runtime-compatible PostgreSQL driver.
 
 ## Documentation
 

@@ -1,6 +1,6 @@
 # Agent Implementation Guide
 
-Use this guide when integrating `ai-sdk-byok` into an existing application.
+Use this guide when integrating `ai-sdk-byok` into an existing application. Choose the Supabase Vault path for Supabase projects or the Drizzle/PostgreSQL path for applications that already own a Drizzle database.
 
 Before editing files, run the compatibility check. If the target app does not meet every required condition, stop and report the incompatibility instead of attempting a partial integration.
 
@@ -10,46 +10,48 @@ Required:
 
 - The app uses TypeScript.
 - The app has trusted server-side code where secrets can be used.
-- The app uses Supabase.
-- The Supabase project can enable and use Vault.
-- The app can run the SQL migrations in `supabase/migrations`.
-- The app can install `ai-sdk-byok`, `@ai-sdk-byok/supabase`, and `@supabase/supabase-js`.
+- The app uses Supabase with Vault, or PostgreSQL with Drizzle ORM.
+- The app can run the selected adapter's SQL migration.
+- The app can install the selected adapter and its peer dependency.
 - User-owned provider credentials can be represented as single-field `{ apiKey: string }` objects.
 - AI provider instances are constructed on the server, not in browser code.
 
 Unsupported for now:
 
-- Non-Supabase storage backends.
+- Storage backends other than Supabase Vault or Drizzle PostgreSQL.
 - Browser-side credential storage or provider construction.
 - Multi-field credentials, OAuth tokens, refresh tokens, or provider-specific credential shapes.
-- Apps that cannot run Supabase RPC migrations.
+- Apps that cannot run the selected adapter's database migration.
 - Apps that require returning plaintext credentials to clients.
 
 ## Stop Conditions
 
 Stop before making changes if:
 
-- The app does not use Supabase, or the user does not want to add Supabase.
-- Supabase Vault is unavailable or cannot be enabled.
+- The app has neither an available Supabase Vault project nor a PostgreSQL Drizzle database.
 - There is no trusted server-side runtime for storing and retrieving credentials.
 - The app requires credential shapes other than `{ apiKey: string }`.
-- The requested integration would expose the Supabase secret key, Vault secret IDs, or plaintext provider API keys to browser code.
+- The requested integration would expose adapter secret material, Vault secret IDs, or plaintext provider API keys to browser code.
 - You cannot identify where authenticated user IDs come from.
 
 When stopping, explain which condition failed and what would need to change before `ai-sdk-byok` can be integrated.
 
 ## Implementation Steps
 
-1. Inspect the app structure, package manager, framework, auth flow, existing AI SDK usage, and Supabase setup.
-2. Install the packages:
+1. Inspect the app structure, package manager, framework, auth flow, existing AI SDK usage, and selected database setup.
+2. Install the packages for the selected adapter:
 
    ```sh
+   # Supabase Vault
    npm install ai-sdk-byok @ai-sdk-byok/supabase @supabase/supabase-js
+
+   # Drizzle + PostgreSQL
+   npm install ai-sdk-byok @ai-sdk-byok/drizzle drizzle-orm
    ```
 
-3. Apply all SQL migrations from `supabase/migrations` in order to the target Supabase project.
-4. Add server-only environment variables for the Supabase project URL and secret key. Do not expose the secret key to the browser.
-5. Create a server-only BYOK manager:
+3. Apply the selected migration: all SQL files from `supabase/migrations` for Supabase, or `packages/drizzle/migrations/0001_ai_sdk_byok_init.sql` for Drizzle PostgreSQL. Drizzle Kit users may generate the equivalent migration from the exported schema.
+4. Add server-only secrets. Supabase uses the project URL and secret key; Drizzle uses a 32-byte base64 master key. Never expose either adapter's secret material to the browser.
+5. Create a server-only BYOK manager. For Supabase:
 
    ```ts
    import { createByokManager } from 'ai-sdk-byok';
@@ -63,6 +65,23 @@ When stopping, explain which condition failed and what would need to change befo
 
    export const byok = createByokManager({
      storage: supabaseAdapter({ client: supabaseAdmin }),
+   });
+   ```
+
+   For Drizzle PostgreSQL:
+
+   ```ts
+   import { createByokManager } from 'ai-sdk-byok';
+   import { drizzleAdapter } from '@ai-sdk-byok/drizzle';
+
+   export const byok = createByokManager({
+     storage: drizzleAdapter({
+       db,
+       dialect: 'postgres',
+       encryption: {
+         current: { version: 'v1', key: process.env.AI_SDK_BYOK_MASTER_KEY! },
+       },
+     }),
    });
    ```
 
@@ -92,7 +111,8 @@ Optional: wrap storage with `cachedStorage` only when the app owns a server-only
 
 ## Security Rules
 
-- Use the Supabase secret key only in trusted server-side code.
+- Use the Supabase secret key only in trusted server-side code when using Supabase.
+- Keep the Drizzle master key outside SQL and use it only in trusted server-side code.
 - Never log, serialize, or return credentials.
 - Never pass plaintext credentials into Client Components or browser-visible payloads.
 - Store only `{ apiKey: string }` credentials.

@@ -8,11 +8,14 @@
 - Stale Vault secrets after metadata deletion.
 - Cloudflare D1 or KV data compromise without the Worker master key (values are AES-256-GCM ciphertext).
 - Sealed-credential replay across storage slots (ciphertext is AAD-bound to `userId`/`provider`/`label` in D1 and `userId`/`keyId` in KV).
+- Drizzle SQL database compromise without its application master key, including leaked backups, dumps, and read replicas.
+- Drizzle ciphertext tampering or movement between `(userId, provider)` slots, because the ciphertext is authenticated with that AAD.
 
 ## Does Not Protect Against
 
 - Compromised application server processes.
 - Compromised Supabase secret keys.
+- A leaked Drizzle master key, or an attacker who obtains both ciphertext and the matching master key.
 - Supabase infrastructure or root-key compromise.
 - Compromised Redis or other app-owned credential cache entries.
 - Malicious dependencies running inside trusted server code.
@@ -34,4 +37,6 @@
 - Encourage provider-side spending caps and usage alerts.
 - Generate the Cloudflare master key with a CSPRNG (for example `openssl rand -base64 32`) and store it only in Worker secrets or Secrets Store.
 - Losing the master key makes stored credentials unrecoverable by design; users re-enter their API keys.
+- Generate the Drizzle master key as a 32-byte base64 value with a CSPRNG and store it outside SQL in trusted application secrets.
+- If a Drizzle master key leaks while matching ciphertext may also have been exposed, treat rows encrypted under that key as compromised and have affected users rotate their provider API keys. Re-encryption with a new key does not retroactively protect already decryptable data.
 - Keep KV cache TTLs short; KV invalidation is eventually consistent across regions.

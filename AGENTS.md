@@ -1,6 +1,6 @@
 # Project Spec: ai-sdk-byok
 
-`ai-sdk-byok` is a TypeScript monorepo for bring-your-own-key credential storage helpers for AI SDK applications. It provides a core manager package and a Supabase Vault adapter so apps can store user-owned provider API keys, list metadata safely, and retrieve plaintext credentials only inside trusted server-side provider construction.
+`ai-sdk-byok` is a TypeScript monorepo for bring-your-own-key credential storage helpers for AI SDK applications. It provides a core manager package plus Supabase Vault, Cloudflare, and Drizzle SQL adapters so apps can store user-owned provider API keys, list metadata safely, and retrieve plaintext credentials only inside trusted server-side provider construction.
 
 ## Read Order
 
@@ -18,10 +18,11 @@ The current scope is intentionally narrow:
 - Edge-compatible ESM package entrypoints;
 - no browser-side credential handling;
 - a Cloudflare adapter published as `@ai-sdk-byok/cloudflare` (D1 storage adapter and Workers KV credential cache with always-encrypted sealed credentials);
+- a Drizzle SQL adapter published as `@ai-sdk-byok/drizzle` (Postgres storage with application-side AES-256-GCM encryption);
 
 ## Source Of Truth
 
-This repository follows spec-driven development. Treat this file as the root project spec for agents and contributors, and treat `docs/specs/001-ai-sdk-byok/` as the baseline feature spec, with `docs/specs/002-key-id-redis-cache/` and `docs/specs/004-cloudflare-adapter/` layering later accepted features.
+This repository follows spec-driven development. Treat this file as the root project spec for agents and contributors, and treat `docs/specs/001-ai-sdk-byok/` as the baseline feature spec, with `docs/specs/002-key-id-redis-cache/`, `docs/specs/003-drizzle-sql-adapter/`, and `docs/specs/004-cloudflare-adapter/` layering later accepted features. The Drizzle SQL adapter spec is implemented.
 
 When changing behavior, read these in order:
 
@@ -38,11 +39,13 @@ Specs are living documents. If a change alters public behavior, security posture
 - `packages/core`: core manager, types, validation, errors, credential proxy, and tests for the `ai-sdk-byok` package.
 - `packages/supabase`: Supabase Vault storage adapter, adapter tests, package README, and shipped migrations.
 - `packages/cloudflare`: Cloudflare D1 storage adapter, Workers KV credential cache, sealed-credential crypto, tests, package README, and shipped D1 migrations.
+- `packages/drizzle`: Drizzle PostgreSQL storage adapter, application-side encryption, adapter tests, package README, and shipped SQL migration.
 - `supabase/migrations`: root copy of SQL migrations for applications integrating from the repository.
 - `examples/nextjs-supabase`: example Next.js app with key management UI and server-side AI SDK provider construction.
 - `examples/cloudflare-worker`: example Hono Worker with key management UI, server-side AI SDK provider construction, and a workerd end-to-end test suite.
 - `docs`: quickstart, architecture, threat model, integration testing, release notes, and agent integration guidance.
 - `docs/specs/001-ai-sdk-byok`: current requirements, plan, tasks, checklist, and decisions.
+- `docs/specs/003-drizzle-sql-adapter`: implemented Drizzle adapter requirements, plan, tasks, checklist, and decisions.
 - Root config files: workspace scripts, TypeScript, tsup, Vitest, ESLint, lockfile, and GitHub automation.
 - Generated artifacts: `dist` and `node_modules`; do not edit these by hand.
 
@@ -60,6 +63,8 @@ Keep duplicate migration copies in `supabase/migrations` and `packages/supabase/
 `@ai-sdk-byok/supabase` exposes `supabaseAdapter(options)`.
 
 `@ai-sdk-byok/cloudflare` exposes `d1Adapter(options)` and `kvCredentialCache(options)`.
+
+`@ai-sdk-byok/drizzle` exposes `drizzleAdapter(options)` and the Postgres schema export `aiSdkByokKeys`.
 
 Provider names are opaque application-defined strings. Omitted labels normalize to `default`. `keyHint` is the final up-to-four characters of the API key.
 
@@ -87,6 +92,7 @@ Validation happens in the core manager before storage adapter calls. Failures th
 - Adapter errors must not include plaintext credentials or serialized credential input.
 - Cloudflare adapter credentials must be sealed with AES-256-GCM before reaching D1 or KV; plaintext and ciphertext must never appear in metadata output or error messages.
 - The Cloudflare master encryption key must decode to exactly 32 bytes, must live only in Worker secrets or Secrets Store bindings, and must never be logged or echoed in errors.
+- Drizzle credentials must be encrypted with AES-256-GCM before reaching SQL; the 32-byte master key must remain outside SQL, and plaintext, ciphertext, nonce, and key material must not appear in public metadata or errors.
 
 The package does not protect against compromised application servers, compromised Supabase secret keys, malicious trusted-server dependencies, or provider-side abuse after a credential is used.
 
@@ -108,7 +114,7 @@ The package does not protect against compromised application servers, compromise
 - AI SDK middleware or model wrappers.
 - React component libraries.
 - Browser-side credential storage or provider construction.
-- Application-side cryptography beyond the sealed-credential scheme owned by `@ai-sdk-byok/cloudflare`.
+- Application-side cryptography beyond the sealed-credential schemes owned by `@ai-sdk-byok/cloudflare` and `@ai-sdk-byok/drizzle`.
 
 ## Development Workflow
 

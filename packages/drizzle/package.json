@@ -1,0 +1,39 @@
+{
+  "name": "@ai-sdk-byok/drizzle",
+  "version": "0.2.0",
+  "description": "Drizzle SQL storage adapter for ai-sdk-byok.",
+  "license": "MIT",
+  "homepage": "https://github.com/Xyri1/ai-sdk-byok#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Xyri1/ai-sdk-byok.git",
+    "directory": "packages/drizzle"
+  },
+  "bugs": {
+    "url": "https://github.com/Xyri1/ai-sdk-byok/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "migrations"
+  ],
+  "dependencies": {
+    "ai-sdk-byok": "0.2.0"
+  },
+  "peerDependencies": {
+    "drizzle-orm": ">=0.41.0"
+  },
+  "devDependencies": {
+    "drizzle-orm": "^0.41.0"
+  }
+}

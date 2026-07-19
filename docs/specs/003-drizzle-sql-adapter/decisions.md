@@ -11,6 +11,7 @@
 - Accept caller-owned Drizzle database instances.
 - Do not create database connections inside the package.
 - Use application-side authenticated encryption.
+- Use AES-256-GCM with a 32-byte base64 master-key representation, a random 12-byte nonce per write, and AAD bound to `(userId, provider)`.
 - Do not use SQL-side encryption or decryption for credential payloads.
 - Do not use `pgcrypto` for plaintext credential handling.
 - Keep the master key outside SQL.
@@ -27,9 +28,5 @@
 
 ## Deferred
 
-- Exact authenticated encryption primitive.
-- Exact master-key encoding and validation rules.
-- Whether to ship raw SQL migrations, Drizzle Kit schema files, or both.
 - Whether to add a first-party re-encryption maintenance helper in the initial release.
 - SQLite schema exports and SQLite integration tests.
-
