@@ -33,6 +33,9 @@ v0.2 版本仍保持聚焦：单字段 `{ apiKey }` 凭据、Supabase Vault、Cl
 # Supabase
 npm install ai-sdk-byok @ai-sdk-byok/supabase @supabase/supabase-js
 
+# Cloudflare Workers（D1 + KV）
+npm install ai-sdk-byok @ai-sdk-byok/cloudflare
+
 # Drizzle + PostgreSQL
 npm install ai-sdk-byok @ai-sdk-byok/drizzle drizzle-orm
 ```
@@ -41,6 +44,8 @@ npm install ai-sdk-byok @ai-sdk-byok/drizzle drizzle-orm
 `drizzle-orm` 是 `@ai-sdk-byok/drizzle` 的对等依赖，使用 Drizzle 适配器时需一并安装。
 
 ## 快速上手
+
+以下示例使用 Supabase 适配器——切换适配器时只需替换 `storage` 一行。完整的接入流程（包括迁移和密钥配置）请参阅各适配器指南：[Supabase](docs/guides/supabase.md)、[Cloudflare](docs/guides/cloudflare.md)、[Drizzle](docs/guides/drizzle.md)。
 
 将 [`packages/supabase/migrations`](packages/supabase/migrations) 中的迁移文件应用到已启用 Vault 的 Supabase 项目，然后在受信任的服务端代码中创建 manager：
 
@@ -96,14 +101,6 @@ Integrate `ai-sdk-byok` into this project by following https://github.com/Xyri1/
 
 ## API
 
-### `createByokManager(options)`
-
-基于存储适配器创建一个 BYOK manager。
-
-```ts
-const byok = createByokManager({ storage });
-```
-
 manager 提供以下方法：
 
 | 方法 | 说明 |
@@ -111,37 +108,10 @@ manager 提供以下方法：
 | `keys.save(input)` | 为 `(userId, provider, label)` 存储或轮换一条 `{ apiKey }` 凭据，仅返回元数据。 |
 | `keys.list(input)` | 列出某用户的凭据元数据，按最新更新时间倒序排列，不返回明文凭据。 |
 | `keys.get(input)` | 返回经 Proxy 包装的 `{ apiKey }` 凭据，若不存在则返回 `null`。 |
+| `keys.getById(input)` | 通过 `{ userId, keyId }` 返回元数据加经 Proxy 包装的 `{ apiKey }` 凭据，若不存在则返回 `null`。 |
 | `keys.delete(input)` | 通过 `userId` 和 `keyId` 删除密钥，公开 API 的删除操作是幂等的。 |
 
-### `supabaseAdapter(options)`
-
-创建一个基于 Supabase Vault 和迁移文件 RPC 函数的存储适配器。
-
-```ts
-const storage = supabaseAdapter({ client: supabaseAdmin });
-```
-
-Supabase 客户端必须使用服务端 secret key 创建，严禁暴露给任何浏览器端代码。
-
-### `drizzleAdapter(options)`
-
-创建一个在受信任应用代码中加密凭据、再写入 SQL 的 PostgreSQL 存储适配器。迁移、密钥轮换和安全模型请参阅 [`packages/drizzle/README.md`](packages/drizzle/README.md)。
-
-```ts
-const storage = drizzleAdapter({
-  db,
-  dialect: 'postgres',
-  encryption: {
-    current: { version: 'v1', key: process.env.AI_SDK_BYOK_MASTER_KEY! },
-  },
-});
-```
-
-### Cloudflare（D1 + KV）
-
-对于部署在 Cloudflare Workers 上的应用，`@ai-sdk-byok/cloudflare` 提供 D1 存储适配器和 Workers KV 凭证缓存。凭证在写入存储前始终使用 AES-256-GCM 加密封装；主密钥保存在 Worker secret 中。安装与配置请参阅 `packages/cloudflare/README.md`。
-
-可运行示例位于 [`examples/cloudflare-worker`](examples/cloudflare-worker) —— 密钥管理界面加服务端 Provider 构建，并附带在 workerd 中运行的端到端测试套件。
+适配器工厂函数：`supabaseAdapter({ client })`、`d1Adapter({ database, encryptionKey })` 与 `kvCredentialCache({ namespace, encryptionKey })`，以及 `drizzleAdapter({ db, dialect, encryption })`。所有导出、选项表、校验规则和错误类型详见 [API 参考](docs/reference/api.md)。
 
 ## 安全说明
 
@@ -160,16 +130,18 @@ const storage = drizzleAdapter({
 
 ## 文档
 
-- [快速上手](docs/quickstart.md)
-- [Agent 集成指南](docs/agent-implementation.md)
-- [架构说明](docs/architecture.md)
-- [威胁模型](docs/threat-model.md)
-- [集成测试](docs/integration-testing.md)
-- [发布检查清单](docs/release-checklist.md)
+- [快速开始](docs/getting-started.md) — 核心概念与最小端到端流程。
+- 集成指南：[Supabase Vault](docs/guides/supabase.md) · [Cloudflare D1 + KV](docs/guides/cloudflare.md) · [Drizzle Postgres](docs/guides/drizzle.md) · [凭据缓存](docs/guides/caching.md)
+- [API 参考](docs/reference/api.md) — 所有导出、选项和错误类型。
+- [安全指南](docs/security.md) — 安全保证、接入规则与防护边界。
+- [Agent 集成指南](docs/agent-implementation.md) — 面向编码 Agent；[`llms.txt`](llms.txt) 索引全部文档。
+- 内部文档：[架构说明](docs/development/architecture.md) · [威胁模型](docs/development/threat-model.md) · [集成测试](docs/development/integration-testing.md) · [发布检查清单](docs/development/release-checklist.md)
 
 ## 示例
 
 - [Next.js + Supabase](examples/nextjs-supabase/README.md) — 包含密钥管理 UI 和使用 Supabase 适配器的 AI SDK 聊天路由。
+- [Cloudflare Worker](examples/cloudflare-worker/README.md) — 基于 Hono 的 Worker，含密钥管理 UI、流式聊天和 workerd 端到端测试套件。
+- [Drizzle + Postgres](examples/drizzle/README.md) — Node + Hono 密钥管理 UI 和流式聊天，Drizzle 适配器可对接任意 Postgres。
 
 ## 开发
 

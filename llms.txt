@@ -1,0 +1,35 @@
+# ai-sdk-byok
+
+> Bring-your-own-key credential storage for AI SDK applications: store per-user provider API keys (shape `{ apiKey: string }`), list metadata safely, and retrieve plaintext credentials only inside trusted server-side provider construction. Core manager package `ai-sdk-byok` plus storage adapters for Supabase Vault, Cloudflare (D1 + Workers KV), and Drizzle PostgreSQL. ESM-only, Node.js 22+ or Cloudflare Workers, server-side only.
+
+Key invariants: `save`/`list` return metadata only; plaintext credentials come only from explicit `get`/`getById` calls and are proxy-wrapped so `JSON.stringify` and string coercion throw; `userId` must come from server-side auth, never from the browser; adapter secrets (Supabase secret key, 32-byte master encryption keys) are server-only.
+
+## Docs
+
+- [Getting started](docs/getting-started.md): mental model, install matrix, and the minimal save/list/getById/delete flow
+- [Supabase guide](docs/guides/supabase.md): full integration on Supabase Vault — migrations, secret key, manager, route wiring, verification
+- [Cloudflare guide](docs/guides/cloudflare.md): full integration on Workers — D1 migration, master-key secret, optional KV cache, Hono route wiring, verification
+- [Drizzle guide](docs/guides/drizzle.md): full integration on PostgreSQL with Drizzle ORM — migration or Drizzle Kit schema, master key, rotation, route wiring, verification
+- [Caching guide](docs/guides/caching.md): optional `cachedStorage` wrapper — cache backend contract, failure semantics, TTL guidance, safety rules
+- [API reference](docs/reference/api.md): every public export — `createByokManager`, `keys.*` methods, types, validation rules, errors, and all adapter factory options
+- [Security guide](docs/security.md): guarantees per adapter, rules integrations must uphold, secret-material handling, and explicit non-protections
+- [Agent implementation guide](docs/agent-implementation.md): step-by-step integration procedure for coding agents, with compatibility checks and stop conditions
+
+## Packages
+
+- [ai-sdk-byok](packages/core/README.md): core manager, validation, credential proxy, and `cachedStorage`
+- [@ai-sdk-byok/supabase](packages/supabase/README.md): Supabase Vault storage adapter (service-role-only RPCs)
+- [@ai-sdk-byok/cloudflare](packages/cloudflare/README.md): D1 storage adapter and KV credential cache, AES-256-GCM sealed
+- [@ai-sdk-byok/drizzle](packages/drizzle/README.md): Drizzle PostgreSQL adapter with application-side AES-256-GCM encryption
+
+## Examples
+
+- [Next.js + Supabase](examples/nextjs-supabase/README.md): key management UI, streaming chat, optional Redis cache wiring
+- [Cloudflare Worker](examples/cloudflare-worker/README.md): Hono Worker with key management UI and workerd end-to-end tests
+- [Drizzle + Postgres](examples/drizzle/README.md): Node + Hono key management UI and streaming chat against any Postgres
+
+## Optional
+
+- [Threat model](docs/development/threat-model.md): formal protects/does-not-protect analysis per adapter
+- [Architecture](docs/development/architecture.md): internal boundaries between core policy and storage adapters
+- [Integration testing](docs/development/integration-testing.md): validating the Supabase migration against a disposable project

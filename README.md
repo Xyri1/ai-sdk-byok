@@ -34,6 +34,9 @@ The v0.2 scope remains focused: single-field `{ apiKey }` credentials, Supabase 
 # Supabase
 npm install ai-sdk-byok @ai-sdk-byok/supabase @supabase/supabase-js
 
+# Cloudflare Workers (D1 + KV)
+npm install ai-sdk-byok @ai-sdk-byok/cloudflare
+
 # Drizzle + PostgreSQL
 npm install ai-sdk-byok @ai-sdk-byok/drizzle drizzle-orm
 ```
@@ -42,6 +45,8 @@ npm install ai-sdk-byok @ai-sdk-byok/drizzle drizzle-orm
 `drizzle-orm` is a peer dependency of `@ai-sdk-byok/drizzle`. Install it when using the Drizzle adapter.
 
 ## Quickstart
+
+Shown with the Supabase adapter — only the `storage` line changes per adapter. Full walkthroughs, including migrations and secrets, live in the per-adapter guides: [Supabase](docs/guides/supabase.md), [Cloudflare](docs/guides/cloudflare.md), [Drizzle](docs/guides/drizzle.md).
 
 Apply the SQL migrations in [`packages/supabase/migrations`](packages/supabase/migrations) in order to a Supabase project with Vault enabled, then create a manager in trusted server-side code:
 
@@ -118,14 +123,6 @@ Integrate `ai-sdk-byok` into this project by following https://github.com/Xyri1/
 
 ## API
 
-### `createByokManager(options)`
-
-Creates a BYOK manager from a storage adapter.
-
-```ts
-const byok = createByokManager({ storage });
-```
-
 The manager exposes:
 
 | Method | Description |
@@ -136,35 +133,7 @@ The manager exposes:
 | `keys.getById(input)` | Returns metadata plus proxy-wrapped `{ apiKey }` credentials for `{ userId, keyId }`, or `null`. |
 | `keys.delete(input)` | Deletes a key by `userId` and `keyId`. Public API deletion is idempotent. |
 
-### `supabaseAdapter(options)`
-
-Creates a storage adapter backed by Supabase Vault and the package migration's RPC functions.
-
-```ts
-const storage = supabaseAdapter({ client: supabaseAdmin });
-```
-
-The Supabase client must be created with a server-side secret key and must never be exposed to browser code.
-
-### `drizzleAdapter(options)`
-
-Creates a PostgreSQL storage adapter that encrypts credentials in trusted application code before writing to SQL. See [`packages/drizzle/README.md`](packages/drizzle/README.md) for migration setup, key rotation, and the security model.
-
-```ts
-const storage = drizzleAdapter({
-  db,
-  dialect: 'postgres',
-  encryption: {
-    current: { version: 'v1', key: process.env.AI_SDK_BYOK_MASTER_KEY! },
-  },
-});
-```
-
-### Cloudflare (D1 + KV)
-
-For apps on Cloudflare Workers, `@ai-sdk-byok/cloudflare` provides a D1 storage adapter and a Workers KV credential cache. Credentials are always sealed with AES-256-GCM before reaching storage; the master key lives in a Worker secret. See `packages/cloudflare/README.md` for setup.
-
-A runnable example lives in [`examples/cloudflare-worker`](examples/cloudflare-worker) — key management UI plus server-side provider construction, with an end-to-end test suite running in workerd.
+Adapter factories: `supabaseAdapter({ client })`, `d1Adapter({ database, encryptionKey })` + `kvCredentialCache({ namespace, encryptionKey })`, and `drizzleAdapter({ db, dialect, encryption })`. Every export, option table, validation rule, and error type is documented in the [API reference](docs/reference/api.md).
 
 ## Security notes
 
@@ -184,16 +153,17 @@ A runnable example lives in [`examples/cloudflare-worker`](examples/cloudflare-w
 
 ## Documentation
 
-- [Quickstart](docs/quickstart.md)
-- [Agent implementation guide](docs/agent-implementation.md)
-- [Architecture](docs/architecture.md)
-- [Threat model](docs/threat-model.md)
-- [Integration testing](docs/integration-testing.md)
-- [Release checklist](docs/release-checklist.md)
+- [Getting started](docs/getting-started.md) — mental model and the minimal end-to-end flow.
+- Integration guides: [Supabase Vault](docs/guides/supabase.md) · [Cloudflare D1 + KV](docs/guides/cloudflare.md) · [Drizzle Postgres](docs/guides/drizzle.md) · [Credential caching](docs/guides/caching.md)
+- [API reference](docs/reference/api.md) — every export, option, and error type.
+- [Security guide](docs/security.md) — guarantees, rules, and non-protections.
+- [Agent implementation guide](docs/agent-implementation.md) — for coding agents; [`llms.txt`](llms.txt) indexes all docs.
+- Internals: [architecture](docs/development/architecture.md) · [threat model](docs/development/threat-model.md) · [integration testing](docs/development/integration-testing.md) · [release checklist](docs/development/release-checklist.md)
 
 ## Examples
 
 - [Next.js + Supabase](examples/nextjs-supabase/README.md) — key management UI and AI SDK chat route using the Supabase adapter.
+- [Cloudflare Worker](examples/cloudflare-worker/README.md) — Hono Worker with key management UI, streaming chat, and a workerd end-to-end test suite.
 - [Drizzle + Postgres](examples/drizzle/README.md) — Node + Hono key management UI and streaming chat using the Drizzle adapter with any Postgres.
 
 ## Development

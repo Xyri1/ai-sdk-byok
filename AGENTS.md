@@ -30,7 +30,7 @@ When changing behavior, read these in order:
 2. `docs/specs/001-ai-sdk-byok/requirements.md` for functional, validation, security, and runtime requirements.
 3. `docs/specs/001-ai-sdk-byok/decisions.md` for accepted product and architecture decisions.
 4. `docs/specs/001-ai-sdk-byok/tasks.md` for delivery status.
-5. `docs/architecture.md`, `docs/threat-model.md`, and `docs/agent-implementation.md` for operational guidance.
+5. `docs/development/architecture.md`, `docs/development/threat-model.md`, and `docs/agent-implementation.md` for operational guidance.
 
 Specs are living documents. If a change alters public behavior, security posture, runtime support, or integration guidance, update the matching spec or doc in the same change. Do not maintain decisions in chat history or commit messages; the spec is the artifact.
 
@@ -42,7 +42,7 @@ Specs are living documents. If a change alters public behavior, security posture
 - `packages/drizzle`: Drizzle PostgreSQL storage adapter, application-side encryption, adapter tests, package README, and shipped SQL migration.
 - `examples/nextjs-supabase`: example Next.js app with key management UI and server-side AI SDK provider construction.
 - `examples/cloudflare-worker`: example Hono Worker with key management UI, server-side AI SDK provider construction, and a workerd end-to-end test suite.
-- `docs`: quickstart, architecture, threat model, integration testing, release notes, and agent integration guidance.
+- `docs`: user-facing integration docs (getting started, per-adapter guides, API reference, security guide, agent integration guidance) plus `docs/development/` for architecture, threat model, integration testing, and release notes; `llms.txt` at the repo root indexes the user-facing docs for agents.
 - `docs/specs/001-ai-sdk-byok`: current requirements, plan, tasks, checklist, and decisions.
 - `docs/specs/003-drizzle-sql-adapter`: implemented Drizzle adapter requirements, plan, tasks, checklist, and decisions.
 - Root config files: workspace scripts, TypeScript, tsup, Vitest, ESLint, lockfile, and GitHub automation.

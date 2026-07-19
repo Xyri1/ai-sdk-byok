@@ -1,6 +1,10 @@
 # Agent Implementation Guide
 
-Use this guide when integrating `ai-sdk-byok` into an existing application. Choose the Supabase Vault path for Supabase projects or the Drizzle/PostgreSQL path for applications that already own a Drizzle database.
+Use this guide when integrating `ai-sdk-byok` into an existing application. Choose one storage path:
+
+- **Supabase Vault** — the app runs on Supabase.
+- **Cloudflare D1 (+ optional KV cache)** — the app runs on Cloudflare Workers.
+- **Drizzle PostgreSQL** — the app owns a PostgreSQL database with Drizzle ORM.
 
 Before editing files, run the compatibility check. If the target app does not meet every required condition, stop and report the incompatibility instead of attempting a partial integration.
 
@@ -9,8 +13,8 @@ Before editing files, run the compatibility check. If the target app does not me
 Required:
 
 - The app uses TypeScript.
-- The app has trusted server-side code where secrets can be used.
-- The app uses Supabase with Vault, or PostgreSQL with Drizzle ORM.
+- The app has trusted server-side code where secrets can be used (for Cloudflare, the Worker itself).
+- The app uses Supabase with Vault, Cloudflare Workers with D1, or PostgreSQL with Drizzle ORM.
 - The app can run the selected adapter's SQL migration.
 - The app can install the selected adapter and its peer dependency.
 - User-owned provider credentials can be represented as single-field `{ apiKey: string }` objects.
@@ -18,7 +22,7 @@ Required:
 
 Unsupported for now:
 
-- Storage backends other than Supabase Vault or Drizzle PostgreSQL.
+- Storage backends other than Supabase Vault, Cloudflare D1, or Drizzle PostgreSQL.
 - Browser-side credential storage or provider construction.
 - Multi-field credentials, OAuth tokens, refresh tokens, or provider-specific credential shapes.
 - Apps that cannot run the selected adapter's database migration.
@@ -28,10 +32,10 @@ Unsupported for now:
 
 Stop before making changes if:
 
-- The app has neither an available Supabase Vault project nor a PostgreSQL Drizzle database.
+- The app has no available Supabase Vault project, Cloudflare D1 database, or PostgreSQL Drizzle database.
 - There is no trusted server-side runtime for storing and retrieving credentials.
 - The app requires credential shapes other than `{ apiKey: string }`.
-- The requested integration would expose adapter secret material, Vault secret IDs, or plaintext provider API keys to browser code.
+- The requested integration would expose adapter secret material, master encryption keys, Vault secret IDs, or plaintext provider API keys to browser code.
 - You cannot identify where authenticated user IDs come from.
 
 When stopping, explain which condition failed and what would need to change before `ai-sdk-byok` can be integrated.
@@ -45,12 +49,18 @@ When stopping, explain which condition failed and what would need to change befo
    # Supabase Vault
    npm install ai-sdk-byok @ai-sdk-byok/supabase @supabase/supabase-js
 
+   # Cloudflare Workers (D1 + KV)
+   npm install ai-sdk-byok @ai-sdk-byok/cloudflare
+
    # Drizzle + PostgreSQL
    npm install ai-sdk-byok @ai-sdk-byok/drizzle drizzle-orm
    ```
 
-3. Apply the selected migration: all SQL files from `packages/supabase/migrations` for Supabase, or `packages/drizzle/migrations/0001_ai_sdk_byok_init.sql` for Drizzle PostgreSQL. Drizzle Kit users may generate the equivalent migration from the exported schema.
-4. Add server-only secrets. Supabase uses the project URL and secret key; Drizzle uses a 32-byte base64 master key. Never expose either adapter's secret material to the browser.
+3. Apply the selected migration, shipped inside the installed adapter package:
+   - **Supabase:** all SQL files from `node_modules/@ai-sdk-byok/supabase/migrations/` in filename order (dashboard SQL editor, `psql`, or Supabase CLI).
+   - **Cloudflare:** copy `node_modules/@ai-sdk-byok/cloudflare/migrations/0001_ai_sdk_byok_init.sql` into the project's `migrations/` directory, then `wrangler d1 migrations apply <DATABASE_NAME>` (`--local` and `--remote`). Create the D1 database and any KV namespace first, and bind them in `wrangler.jsonc`.
+   - **Drizzle:** apply `node_modules/@ai-sdk-byok/drizzle/migrations/0001_ai_sdk_byok_init.sql`, or generate the equivalent with Drizzle Kit from the exported `aiSdkByokKeys` schema — one or the other, not both.
+4. Add server-only secrets. Supabase uses the project URL and secret key; Cloudflare uses a 32-byte base64 master key stored via `wrangler secret put BYOK_MASTER_KEY` (locally in `.dev.vars`); Drizzle uses a 32-byte base64 master key in server env. Generate master keys with `openssl rand -base64 32`. Never expose any adapter's secret material to the browser.
 5. Create a server-only BYOK manager. For Supabase:
 
    ```ts
@@ -66,6 +76,23 @@ When stopping, explain which condition failed and what would need to change befo
    export const byok = createByokManager({
      storage: supabaseAdapter({ client: supabaseAdmin }),
    });
+   ```
+
+   For Cloudflare (inside the Worker, from bindings; `kvCredentialCache` + `cachedStorage` only if a KV namespace is bound):
+
+   ```ts
+   import { createByokManager, cachedStorage } from 'ai-sdk-byok';
+   import { d1Adapter, kvCredentialCache } from '@ai-sdk-byok/cloudflare';
+
+   function createManager(env: Env) {
+     return createByokManager({
+       storage: cachedStorage({
+         storage: d1Adapter({ database: env.DB, encryptionKey: env.BYOK_MASTER_KEY }),
+         cache: kvCredentialCache({ namespace: env.BYOK_CACHE, encryptionKey: env.BYOK_MASTER_KEY }),
+         ttlMs: 60_000,
+       }),
+     });
+   }
    ```
 
    For Drizzle PostgreSQL:
@@ -107,23 +134,25 @@ When stopping, explain which condition failed and what would need to change befo
 9. Add or update tests for the new server-side flows.
 10. Run the project's verification commands.
 
-Optional: wrap storage with `cachedStorage` only when the app owns a server-only credential cache. Redis-style cache values include plaintext credentials, require explicit TTLs, and are not a first-party adapter package. Do not cache metadata/list responses as part of this integration.
+Optional: wrap storage with `cachedStorage` only when the app owns a server-only credential cache. On Cloudflare, `kvCredentialCache` is the first-party backend; elsewhere the app implements the cache interface itself (Redis-style values include plaintext credentials and require explicit TTLs). Do not cache metadata/list responses as part of this integration.
 
 ## Security Rules
 
 - Use the Supabase secret key only in trusted server-side code when using Supabase.
-- Keep the Drizzle master key outside SQL and use it only in trusted server-side code.
+- Keep the Cloudflare master key only in Worker secrets or Secrets Store bindings; keep the Drizzle master key outside SQL and only in trusted server-side code.
 - Never log, serialize, or return credentials.
 - Never pass plaintext credentials into Client Components or browser-visible payloads.
 - Store only `{ apiKey: string }` credentials.
 - Use `keys.getById` or `keys.get` as late as possible, only when constructing a provider.
 - Treat Supabase credential RPC functions as service-role-only operations.
-- Treat Redis or any other credential cache as trusted secret infrastructure and never expose it to browser code.
+- Treat Redis, Workers KV, or any other credential cache as trusted secret infrastructure and never expose it to browser code.
 
 ## Useful References
 
-- [Quickstart](quickstart.md)
-- [Architecture](architecture.md)
-- [Threat model](threat-model.md)
+- [Getting started](getting-started.md)
+- [Supabase guide](guides/supabase.md) · [Cloudflare guide](guides/cloudflare.md) · [Drizzle guide](guides/drizzle.md) · [Caching guide](guides/caching.md)
+- [API reference](reference/api.md)
+- [Security guide](security.md)
 - [Next.js + Supabase example](../examples/nextjs-supabase/README.md)
+- [Cloudflare Worker example](../examples/cloudflare-worker/README.md)
 - [Drizzle + Postgres example](../examples/drizzle/README.md)
