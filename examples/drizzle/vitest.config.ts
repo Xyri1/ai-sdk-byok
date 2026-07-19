@@ -1,0 +1,14 @@
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  resolve: {
+    alias: {
+      'ai-sdk-byok': new URL('../../packages/core/src/index.ts', import.meta.url).pathname,
+      '@ai-sdk-byok/drizzle': new URL('../../packages/drizzle/src/index.ts', import.meta.url).pathname,
+    },
+  },
+  test: {
+    environment: 'node',
+    include: ['test/**/*.test.ts'],
+  },
+});
