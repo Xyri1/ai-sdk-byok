@@ -42,3 +42,6 @@ jobs:
 
       - name: Publish Supabase adapter
         run: npm publish -w @ai-sdk-byok/supabase --access public --provenance
+
+      - name: Publish Drizzle adapter
+        run: npm publish -w @ai-sdk-byok/drizzle --access public --provenance
